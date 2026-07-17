@@ -1,6 +1,6 @@
 import { Plus, Sparkles } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
+import BookAndLampHero from "../public/images/book-and-lamp-hero.svg";
 
 const steps = [
   {
@@ -73,13 +73,9 @@ export default function HeroSection() {
 
         <div className="library-hero-illustration">
           <div className="library-hero-image">
-            <Image
-              src="/images/library-hero.jpg"
-              alt="Stack of books on a wooden desk"
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 224px, (max-width: 1024px) 176px, 160px"
-              priority
+            <BookAndLampHero
+              className="full h-full"
+              aria-label="An open book on a desk under the warm light of a reading lamp"
             />
           </div>
         </div>

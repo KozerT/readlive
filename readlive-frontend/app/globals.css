@@ -509,7 +509,7 @@
     @apply flex w-full shrink-0 items-center justify-center;
   }
   .library-hero-image {
-    @apply relative mx-auto aspect-square size-56 shrink-0 overflow-hidden  shadow-soft-md md:size-44 lg:size-40 rounded-md;
+    @apply relative mx-auto aspect-square size-56 shrink-0 overflow-hidden md:size-44 lg:size-60;
   }
 
   .library-steps-card {

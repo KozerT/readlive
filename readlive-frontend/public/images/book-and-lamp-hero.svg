@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 600" fill="none">
+  <!-- Glowing Light Beam -->
+  <path d="M270 230 L130 500 L470 500 L370 230 Z" fill="currentColor" fill-opacity="0.08"/>
+
+  <!-- Desk Surface -->
+  <line x1="80" y1="500" x2="620" y2="500" stroke="currentColor" stroke-width="12" stroke-linecap="round"/>
+
+  <!-- Left Book Page -->
+  <path d="M300 500 C240 510 160 480 160 480 L160 380 C160 380 240 410 300 420 Z" stroke="currentColor" stroke-width="12" stroke-linejoin="round" fill="currentColor" fill-opacity="0.1"/>
+  
+  <!-- Right Book Page -->
+  <path d="M300 500 C360 510 440 480 440 480 L440 380 C440 380 360 410 300 420 Z" stroke="currentColor" stroke-width="12" stroke-linejoin="round" fill="currentColor" fill-opacity="0.1"/>
+  
+  <!-- Book Spine -->
+  <line x1="300" y1="420" x2="300" y2="500" stroke="currentColor" stroke-width="12" stroke-linecap="round"/>
+  
+  <!-- Left Page Text Lines -->
+  <path d="M190 410 C220 425 255 430 270 432" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
+  <path d="M190 440 C220 455 255 460 270 462" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Right Page Text Lines -->
+  <path d="M410 410 C380 425 345 430 330 432" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
+  <path d="M410 440 C380 455 345 460 330 462" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Lamp Base -->
+  <rect x="470" y="488" width="90" height="12" rx="6" fill="currentColor"/>
+  
+  <!-- Lamp Arm -->
+  <path d="M350 220 C480 220 515 350 515 488" stroke="currentColor" stroke-width="14" fill="none" stroke-linecap="round"/>
+  
+  <!-- Lamp Arm Joint -->
+  <circle cx="350" cy="210" r="12" fill="currentColor"/>
+  
+  <!-- Lamp Shade -->
+  <path d="M260 230 C270 160 370 160 380 230 Z" fill="currentColor"/>
+
+  <!-- AI Magic Sparkles -->
+  <path d="M140 220 L144 232 L156 236 L144 240 L140 252 L136 240 L124 236 L136 232 Z" fill="currentColor"/>
+  <path d="M460 320 L463 328 L471 331 L463 334 L460 342 L457 334 L449 331 L457 328 Z" fill="currentColor"/>
+  <circle cx="490" cy="180" r="5" fill="currentColor"/>
+  <circle cx="530" cy="240" r="3" fill="currentColor"/>
+  <circle cx="160" cy="330" r="4" fill="currentColor"/>
+  <circle cx="110" cy="400" r="6" fill="currentColor"/>
+</svg>
