@@ -130,12 +130,18 @@ export const voiceOptions = {
     name: "Sarah",
     description: "Young female, American, soft & approachable",
   },
+  // TODO: replace with a real ElevenLabs voice ID before wiring up TTS playback
+  erika: {
+    id: "REPLACE_ME",
+    name: "Erika",
+    description: "Young female, warm & expressive",
+  },
 };
 
 // Voice categories for the selector UI
 export const voiceCategories = {
   male: ["dave", "daniel", "chris"],
-  female: ["rachel", "sarah"],
+  female: ["rachel", "sarah", "erika"],
 };
 
 // Default voice
