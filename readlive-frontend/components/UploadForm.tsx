@@ -1,14 +1,13 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FileText, ImagePlus, UploadCloud, X } from "lucide-react";
 import { useRef } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { FileText, ImagePlus, UploadCloud, X } from "lucide-react";
 
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import LoadingOverlay from "@/components/LoadingOverlay";
-import { cn } from "@/lib/utils";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   ACCEPTED_IMAGE_TYPES,
   ACCEPTED_PDF_TYPES,
@@ -18,6 +17,7 @@ import {
   voiceCategories,
   voiceOptions,
 } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 type VoiceKey = keyof typeof voiceOptions;
 const voiceKeys = Object.keys(voiceOptions) as [VoiceKey, ...VoiceKey[]];
@@ -51,7 +51,8 @@ const uploadFormSchema = z.object({
 
 type UploadFormValues = z.infer<typeof uploadFormSchema>;
 
-const formatFileSize = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+const formatFileSize = (bytes: number) =>
+  `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 
 const UploadForm = () => {
   const pdfInputRef = useRef<HTMLInputElement>(null);
@@ -121,7 +122,10 @@ const UploadForm = () => {
                 pdfInputRef.current?.click();
               }
             }}
-            className={cn("upload-dropzone", pdfFile && "upload-dropzone-uploaded")}
+            className={cn(
+              "upload-dropzone",
+              pdfFile && "upload-dropzone-uploaded"
+            )}
           >
             {pdfFile ? (
               <>
@@ -207,8 +211,12 @@ const UploadForm = () => {
             ) : (
               <>
                 <ImagePlus className="upload-dropzone-icon mb-1.5 size-8" />
-                <p className="upload-dropzone-text">Click to upload cover image</p>
-                <p className="upload-dropzone-hint">Leave empty to autogenerate</p>
+                <p className="upload-dropzone-text">
+                  Click to upload cover image
+                </p>
+                <p className="upload-dropzone-hint">
+                  Leave empty to autogenerate
+                </p>
               </>
             )}
           </div>
@@ -260,7 +268,9 @@ const UploadForm = () => {
           <RadioGroup
             value={selectedVoice}
             onValueChange={(value) =>
-              form.setValue("voice", value as VoiceKey, { shouldValidate: true })
+              form.setValue("voice", value as VoiceKey, {
+                shouldValidate: true,
+              })
             }
             className="contents"
           >
@@ -277,7 +287,8 @@ const UploadForm = () => {
                       htmlFor={`voice-${key}`}
                       className={cn(
                         "voice-selector-option",
-                        selectedVoice === key && "voice-selector-option-selected"
+                        selectedVoice === key &&
+                          "voice-selector-option-selected"
                       )}
                     >
                       <RadioGroupItem value={key} id={`voice-${key}`} />
@@ -308,7 +319,8 @@ const UploadForm = () => {
                       htmlFor={`voice-${key}`}
                       className={cn(
                         "voice-selector-option",
-                        selectedVoice === key && "voice-selector-option-selected"
+                        selectedVoice === key &&
+                          "voice-selector-option-selected"
                       )}
                     >
                       <RadioGroupItem value={key} id={`voice-${key}`} />
