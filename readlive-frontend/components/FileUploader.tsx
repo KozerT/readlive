@@ -1,13 +1,13 @@
 "use client";
 
-import { type LucideIcon, X } from "lucide-react";
+import { X, type LucideIcon } from "lucide-react";
 import { useRef } from "react";
 import {
+  useController,
+  useFormContext,
   type Control,
   type FieldPath,
   type FieldValues,
-  useController,
-  useFormContext,
 } from "react-hook-form";
 
 import {
@@ -31,8 +31,11 @@ interface FileUploaderProps<TFieldValues extends FieldValues> {
   iconClassName?: string;
 }
 
-const formatFileSize = (bytes: number) =>
-  `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+const formatFileSize = (bytes: number) => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 const FileUploader = <TFieldValues extends FieldValues>({
   control,
