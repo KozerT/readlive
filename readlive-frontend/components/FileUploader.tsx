@@ -12,6 +12,7 @@ import {
 
 import {
   FormControl,
+  FormDescription,
   FormFieldContext,
   FormItem,
   FormLabel,
@@ -112,7 +113,9 @@ const FileUploader = <TFieldValues extends FieldValues>({
             <>
               <Icon className={cn("upload-dropzone-icon", iconClassName)} />
               <p className="upload-dropzone-text">{placeholder}</p>
-              <p className="upload-dropzone-hint">{hint}</p>
+              <FormDescription className="upload-dropzone-hint">
+                {hint}
+              </FormDescription>
             </>
           )}
         </div>
