@@ -63,23 +63,15 @@ const FileUploader = <TFieldValues extends FieldValues>({
     <FormFieldContext.Provider value={{ name }}>
       <FormItem>
         <FormLabel className="form-label">{label}</FormLabel>
-        <FormControl>
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() => inputRef.current?.click()}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                inputRef.current?.click();
-              }
-            }}
-            className={cn(
-              "upload-dropzone",
-              file && "upload-dropzone-uploaded",
-              className
-            )}
-          >
+        <div
+          onClick={() => inputRef.current?.click()}
+          className={cn(
+            "upload-dropzone",
+            file && "upload-dropzone-uploaded",
+            className
+          )}
+        >
+          <FormControl>
             <input
               ref={(element) => {
                 field.ref(element);
@@ -87,43 +79,44 @@ const FileUploader = <TFieldValues extends FieldValues>({
               }}
               type="file"
               accept={acceptTypes}
-              className="hidden"
+              className="sr-only" /* Changed from 'hidden' to 'sr-only' */
               onBlur={field.onBlur}
               onChange={(event) => {
                 field.onChange(event.target.files?.[0]);
                 trigger(name);
               }}
             />
-            {file ? (
-              <>
-                <Icon className={cn("upload-dropzone-icon", iconClassName)} />
-                <p className="upload-dropzone-text max-w-[80%] truncate">
-                  {file.name}
-                </p>
-                <p className="upload-dropzone-hint">
-                  {formatFileSize(file.size)}
-                </p>
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    removeFile();
-                  }}
-                  className="upload-dropzone-remove mt-3"
-                  aria-label={`Remove ${label}`}
-                >
-                  <X className="size-4" />
-                </button>
-              </>
-            ) : (
-              <>
-                <Icon className={cn("upload-dropzone-icon", iconClassName)} />
-                <p className="upload-dropzone-text">{placeholder}</p>
-                <p className="upload-dropzone-hint">{hint}</p>
-              </>
-            )}
-          </div>
-        </FormControl>
+          </FormControl>
+          {file ? (
+            <>
+              <Icon className={cn("upload-dropzone-icon", iconClassName)} />
+              <p className="upload-dropzone-text max-w-[80%] truncate">
+                {file.name}
+              </p>
+              <p className="upload-dropzone-hint">
+                {formatFileSize(file.size)}
+              </p>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  removeFile();
+                }}
+                className="upload-dropzone-remove mt-3"
+                aria-label={`Remove ${label}`}
+              >
+                <X className="size-4" />
+              </button>
+            </>
+          ) : (
+            <>
+              <Icon className={cn("upload-dropzone-icon", iconClassName)} />
+              <p className="upload-dropzone-text">{placeholder}</p>
+              <p className="upload-dropzone-hint">{hint}</p>
+            </>
+          )}
+        </div>
+
         <FormMessage />
       </FormItem>
     </FormFieldContext.Provider>
