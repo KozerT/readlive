@@ -68,3 +68,10 @@ export interface CreateBook {
   coverBlobKey?: string;
   fileSize: number;
 }
+
+export interface TextSegment {
+  text: string;
+  segmentIndex: number;
+  pageNumber?: number;
+  wordCount: number;
+}
