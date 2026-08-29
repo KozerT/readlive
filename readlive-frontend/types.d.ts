@@ -1,3 +1,10 @@
+import { UploadSchema } from "@/lib/zod";
+import z from "zod";
+
+// ============================================
+// DATABASE MODELS
+// ============================================
+
 export interface BookCardProps {
   title: string;
   author: string;
@@ -43,4 +50,21 @@ export interface IVoiceSession extends Document {
   billingPeriodStart: Date;
   createdAt: Date;
   updatedAt: Date;
+}
+// ============================================
+// FORM & INPUT TYPES
+// ============================================
+
+export type BookUploadFormValues = z.infer<typeof UploadSchema>;
+
+export interface CreateBook {
+  clerkId: string;
+  title: string;
+  author: string;
+  persona?: string;
+  fileURL: string;
+  fileBlobKey: string;
+  coverURL?: string;
+  coverBlobKey?: string;
+  fileSize: number;
 }
