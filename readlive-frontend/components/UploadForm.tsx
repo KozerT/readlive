@@ -1,80 +1,158 @@
-"use client";
+"use client"
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { FileText, ImagePlus } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-
-import FileUploader from "@/components/FileUploader";
-import LoadingOverlay from "@/components/LoadingOverlay";
-import { Form } from "@/components/ui/form";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import FileUploader from "@/components/FileUploader"
+import LoadingOverlay from "@/components/LoadingOverlay"
+import { Form } from "@/components/ui/form"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
-  ACCEPTED_IMAGE_TYPES,
-  ACCEPTED_PDF_TYPES,
-  DEFAULT_VOICE,
-  MAX_FILE_SIZE,
-  MAX_IMAGE_SIZE,
-  voiceCategories,
-  voiceOptions,
-} from "@/lib/constants";
-import { cn } from "@/lib/utils";
+  checkBookExists,
+  createBook,
+  saveBookSegments,
+} from "@/lib/actions/book.actions"
+import { voiceCategories, voiceOptions } from "@/lib/constants"
+import { cn, parsePDFFile } from "@/lib/utils"
+import { UploadSchema } from "@/lib/zod"
+import { BookUploadFormValues } from "@/types"
+import { useAuth } from "@clerk/nextjs"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { upload } from "@vercel/blob/client"
+import { FileText, ImagePlus } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { useForm } from "react-hook-form"
+import { toast } from "sonner"
 
-type VoiceKey = keyof typeof voiceOptions;
-const voiceKeys = Object.keys(voiceOptions) as [VoiceKey, ...VoiceKey[]];
-
-const uploadFormSchema = z.object({
-  pdfFile: z
-    .instanceof(File, { message: "Please select a PDF file to upload." })
-    .refine(
-      (file) => ACCEPTED_PDF_TYPES.includes(file.type),
-      "Only PDF files are supported."
-    )
-    .refine(
-      (file) => file.size <= MAX_FILE_SIZE,
-      "PDF must be 50 MB or smaller."
-    ),
-  coverImage: z
-    .instanceof(File)
-    .refine(
-      (file) => ACCEPTED_IMAGE_TYPES.includes(file.type),
-      "Cover must be a JPG, PNG or WEBP image."
-    )
-    .refine(
-      (file) => file.size <= MAX_IMAGE_SIZE,
-      "Cover image must be 10 MB or smaller."
-    )
-    .optional(),
-  title: z.string().trim().min(1, "Title is required."),
-  author: z.string().trim().min(1, "Author name is required."),
-  voice: z.enum(voiceKeys, { message: "Please choose a voice." }),
-});
-
-type UploadFormValues = z.infer<typeof uploadFormSchema>;
+type VoiceKey = keyof typeof voiceOptions
 
 const UploadForm = () => {
-  const form = useForm<UploadFormValues>({
-    resolver: zodResolver(uploadFormSchema),
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+  const { userId } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  const form = useForm<BookUploadFormValues>({
+    resolver: zodResolver(UploadSchema),
     defaultValues: {
       title: "",
       author: "",
-      voice: DEFAULT_VOICE as VoiceKey,
+      persona: "",
+      pdfFile: undefined,
+      coverImage: undefined,
     },
-  });
+  })
 
-  const selectedVoice = form.watch("voice");
+  const selectedVoice = form.watch("voice")
 
-  const onSubmit = async (values: UploadFormValues) => {
-    const formData = new FormData();
-    formData.append("pdfFile", values.pdfFile);
-    if (values.coverImage) formData.append("coverImage", values.coverImage);
-    formData.append("title", values.title);
-    formData.append("author", values.author);
-    formData.append("voice", values.voice);
+  const onSubmit = async (data: BookUploadFormValues) => {
+    if (!userId) {
+      return toast.error("Please login to upload books")
+    }
+    setIsSubmitting(true)
+    // TODO: POST to the book upload endpoint once available.
+    try {
+      const existsCheck = await checkBookExists(data.title)
 
-    // TODO: POST to the book upload endpoint once available
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-  };
+      if (existsCheck.exists) {
+        toast.info("Book with the same title already exists.")
+        form.reset()
+        router.push(`/books/${existsCheck.book.slug}`)
+        return
+      }
+
+      const fileTitle = data.title.replace(/\s+/g, "-").toLocaleLowerCase()
+      const pdfFile = data.pdfFile[0]
+
+      const parsePDF = await parsePDFFile(pdfFile)
+
+      if (parsePDF.content.length === 0) {
+        return toast.error(
+          "Failed to parse PDF content. Please check the file and try again."
+        )
+      }
+
+      const uploadedPdfBlob = await upload(fileTitle, pdfFile, {
+        access: "public",
+        handleUploadUrl: "/api/upload",
+        contentType: "application/pdf",
+      })
+
+      let coverUrl: string
+
+      if (data.coverImage) {
+        const coverFile = data.coverImage
+        const uploadedCoverBlob = await upload(
+          `${fileTitle}_cover.png`,
+          coverFile,
+          {
+            access: "public",
+            handleUploadUrl: "/api/upload",
+            contentType: coverFile.type,
+          }
+        )
+        coverUrl = uploadedCoverBlob.url
+      } else {
+        const response = await fetch(parsePDF.cover)
+        const blob = await response.blob()
+
+        const uploadedCoverBlob = await upload(`${fileTitle}_cover.png`, blob, {
+          access: "public",
+          handleUploadUrl: "/api/upload",
+          contentType: "image/png",
+        })
+        coverUrl = uploadedCoverBlob.url
+      }
+      const book = await createBook({
+        clerkId: userId,
+        title: data.title,
+        author: data.author,
+        persona: data.persona,
+        fileURL: uploadedPdfBlob.url,
+        fileBlobKey: uploadedPdfBlob.pathname,
+        coverURL: coverUrl,
+        fileSize: pdfFile.size,
+      })
+
+      if (!book.success) {
+        toast.error((book.error as string) || "Failed to create a book.")
+        if (book.isBillingError) {
+          router.push("/subscriptions")
+        }
+        return
+      }
+
+      if (book.alreadyExist && book.data) {
+        toast.info("Book with the same title already exists.")
+        form.reset()
+        router.push(`/books/${book.data.slug}`)
+        return
+      }
+
+      const segments = await saveBookSegments(
+        book.data._id,
+        userId,
+        parsePDF.content
+      )
+
+      if (!segments?.success) {
+        toast.error("Failed to save book segments.")
+        throw new Error("Failed to save book segments")
+      }
+
+      form.reset()
+      router.push("/")
+    } catch (error) {
+      console.error(error)
+      toast.error("Failed to upload a book. Please try again later")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  if (!isMounted) return null
 
   return (
     <div className="new-book-wrapper">
@@ -159,7 +237,7 @@ const UploadForm = () => {
                 </p>
                 <div className="voice-selector-options">
                   {voiceCategories.male.map((key) => {
-                    const voice = voiceOptions[key as VoiceKey];
+                    const voice = voiceOptions[key as VoiceKey]
                     return (
                       <label
                         key={key}
@@ -180,7 +258,7 @@ const UploadForm = () => {
                           </span>
                         </span>
                       </label>
-                    );
+                    )
                   })}
                 </div>
               </div>
@@ -191,7 +269,7 @@ const UploadForm = () => {
                 </p>
                 <div className="voice-selector-options">
                   {voiceCategories.female.map((key) => {
-                    const voice = voiceOptions[key as VoiceKey];
+                    const voice = voiceOptions[key as VoiceKey]
                     return (
                       <label
                         key={key}
@@ -212,7 +290,7 @@ const UploadForm = () => {
                           </span>
                         </span>
                       </label>
-                    );
+                    )
                   })}
                 </div>
               </div>
@@ -236,7 +314,7 @@ const UploadForm = () => {
 
       {form.formState.isSubmitting && <LoadingOverlay />}
     </div>
-  );
-};
+  )
+}
 
-export default UploadForm;
+export default UploadForm
