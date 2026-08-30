@@ -3,6 +3,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { ui } from "@clerk/ui";
 import type { Metadata } from "next";
 import { IBM_Plex_Sans, Sora } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const ibmPlexSans = IBM_Plex_Sans({
@@ -41,6 +42,7 @@ export default function RootLayout({
           <Navbar />
           {children}
         </ClerkProvider>
+        <Toaster />
       </body>
     </html>
   );
