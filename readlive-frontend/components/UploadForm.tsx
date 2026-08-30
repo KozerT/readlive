@@ -39,7 +39,7 @@ const UploadForm = () => {
     defaultValues: {
       title: "",
       author: "",
-      persona: "",
+      voice: "",
       pdfFile: undefined,
       coverImage: undefined,
     },
@@ -64,7 +64,7 @@ const UploadForm = () => {
       }
 
       const fileTitle = data.title.replace(/\s+/g, "-").toLocaleLowerCase()
-      const pdfFile = data.pdfFile[0]
+      const pdfFile = data.pdfFile
 
       const parsePDF = await parsePDFFile(pdfFile)
 
@@ -109,7 +109,7 @@ const UploadForm = () => {
         clerkId: userId,
         title: data.title,
         author: data.author,
-        persona: data.persona,
+        persona: data.voice,
         fileURL: uploadedPdfBlob.url,
         fileBlobKey: uploadedPdfBlob.pathname,
         coverURL: coverUrl,

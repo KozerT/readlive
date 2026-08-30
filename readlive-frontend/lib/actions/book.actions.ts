@@ -32,7 +32,7 @@ export const createBook = async (data: CreateBook) => {
 
     const book = await Book.create({
       ...data,
-      clarkId: data.clerkId,
+      clerkId: data.clerkId,
       slug,
       totalSegments: 0,
     })
