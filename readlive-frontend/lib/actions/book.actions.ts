@@ -114,3 +114,20 @@ export const checkBookExists = async (title: string) => {
     }
   }
 }
+
+export const getAllBooks = async () => {
+  try {
+    await connectToDatabase()
+    const books = await Book.find({}).sort({ createdAt: -1 }).lean()
+    return {
+      success: true,
+      data: serializeData(books),
+    }
+  } catch (error) {
+    console.error("Error fetching all books", error)
+    return {
+      success: false,
+      error,
+    }
+  }
+}

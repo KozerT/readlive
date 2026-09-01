@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "covers.openlibrary.org",
       },
+      {
+        protocol: "https",
+        hostname: "cgewzgru645gb9bn.public.blob.vercel-storage.com",
+      },
     ],
   },
   turbopack: {
