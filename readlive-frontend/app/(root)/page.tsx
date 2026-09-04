@@ -2,7 +2,7 @@ import BookCard from "@/components/BookCard"
 import HeroSection from "@/components/HeroSection"
 import { getAllBooks } from "@/lib/actions/book.actions"
 
-export default async function Home() {
+export default async function BookDetailsPage() {
   const bookResults = await getAllBooks()
   const books = bookResults.success ? bookResults.data ?? [] : []
 
