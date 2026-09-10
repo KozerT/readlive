@@ -1,3 +1,4 @@
+import VapiControls from "@/components/VapiControls"
 import { getBookBySlug } from "@/lib/actions/book.actions"
 import { auth } from "@clerk/nextjs/server"
 import { ArrowLeft, Clock3, Mic, Radio } from "lucide-react"
@@ -33,6 +34,7 @@ export default async function BookPage({ params }: BookPageProps) {
       </Link>
 
       <div className="vapi-main-container gap-8 sm:gap-12">
+        {/* Header section with book cover, title, author, and status indicators */}
         <section className="vapi-header-card w-full sm:p-8 lg:p-10">
           <div className="vapi-card-layout">
             <div className="vapi-cover-wrapper">
@@ -102,22 +104,7 @@ export default async function BookPage({ params }: BookPageProps) {
           </div>
         </section>
 
-        <section
-          className="transcript-container"
-          aria-label="Conversation transcript"
-        >
-          <div className="transcript-empty">
-            <Mic
-              className="mb-8 size-16 rounded-full bg-[var(--bg-tertiary)] p-5 text-[var(--text-muted)]"
-              aria-hidden="true"
-            />
-            <p className="transcript-empty-text">No conversation yet</p>
-            <p className="transcript-empty-hint">
-              Click the mic button above to start exploring the ideas in this
-              text with the AI {persona}.
-            </p>
-          </div>
-        </section>
+        <VapiControls book={book} />
       </div>
     </main>
   )

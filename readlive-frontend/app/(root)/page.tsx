@@ -4,7 +4,7 @@ import { getAllBooks } from "@/lib/actions/book.actions"
 
 export default async function BookDetailsPage() {
   const bookResults = await getAllBooks()
-  const books = bookResults.success ? bookResults.data ?? [] : []
+  const books = bookResults.success ? (bookResults.data ?? []) : []
 
   return (
     <main className="container wrapper">

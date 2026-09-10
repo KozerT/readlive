@@ -82,3 +82,8 @@ export interface BookCardProps {
   coverURL: string
   slug: string
 }
+
+export interface Messages {
+  role: strung
+  content: string
+}
