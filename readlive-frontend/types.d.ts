@@ -84,6 +84,6 @@ export interface BookCardProps {
 }
 
 export interface Messages {
-  role: strung
+  role: string
   content: string
 }

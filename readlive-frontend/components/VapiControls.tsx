@@ -2,8 +2,9 @@
 
 import useVapi from "@/hooks/useVapi"
 import { IBook } from "@/types"
-import { Clock3, Mic, Radio } from "lucide-react"
+import { Clock3, Mic, MicOff, Radio } from "lucide-react"
 import Image from "next/image"
+import Transcript from "./Transcript"
 
 function VapiControls({ book }: { book: IBook }) {
   const {
@@ -11,10 +12,12 @@ function VapiControls({ book }: { book: IBook }) {
     isActive,
     messages,
     duration,
-    curentUserMessage,
-    start,
-    stop,
+    currentMessage,
+    curentUserMessage: currentUserMessage,
+    toggle,
   } = useVapi(book)
+
+  const isBusy = isActive && (status === "speaking" || status === "thinking")
 
   const AiPersona = book.persona
     ? `${book.persona[0].toUpperCase()}${book.persona.slice(1)}`
@@ -46,12 +49,32 @@ function VapiControls({ book }: { book: IBook }) {
               </div>
             )}
             <div className="vapi-mic-wrapper">
+              {isBusy && (
+                <span className="vapi-pulse-ring" aria-hidden="true" />
+              )}
               <button
                 type="button"
-                className="vapi-mic-btn vapi-mic-btn-inactive"
-                aria-label="Start voice conversation"
+                className={`vapi-mic-btn ${isActive ? "vapi-mic-btn-active" : "vapi-mic-btn-inactive"}`}
+                aria-label={
+                  isActive
+                    ? "Stop voice conversation"
+                    : "Start voice conversation"
+                }
+                aria-pressed={isActive}
+                disabled={status === "connecting"}
+                onClick={toggle}
               >
-                <Mic className="size-7 text-[var(--blue)]" aria-hidden="true" />
+                {isActive ? (
+                  <Mic
+                    className="size-7 text-[var(--blue)]"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <MicOff
+                    className="size-7 text-[var(--text-secondary)]"
+                    aria-hidden="true"
+                  />
+                )}
               </button>
             </div>
           </div>
@@ -88,22 +111,14 @@ function VapiControls({ book }: { book: IBook }) {
           </div>
         </div>
       </section>
-      <section
-        className="transcript-container"
-        aria-label="Conversation transcript"
-      >
-        <div className="transcript-empty">
-          <Mic
-            className="mb-8 size-16 rounded-full bg-[var(--bg-tertiary)] p-5 text-[var(--text-muted)]"
-            aria-hidden="true"
-          />
-          <p className="transcript-empty-text">No conversation yet</p>
-          <p className="transcript-empty-hint">
-            Click the mic button above to start exploring the ideas in this text
-            with the AI {AiPersona}.
-          </p>
-        </div>
-      </section>
+      <div className="vapi-transcript-wrapper">
+        <Transcript
+          messages={messages}
+          currentMessage={currentMessage}
+          currentUserMessage={currentUserMessage}
+          persona={AiPersona}
+        />
+      </div>
     </>
   )
 }

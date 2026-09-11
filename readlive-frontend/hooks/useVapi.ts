@@ -51,18 +51,45 @@ export const useVapi = (book: IBook) => {
 
   //const showTimeWarning = remainningSeconds <= 30 && remainningSeconds > 0
 
-  const start = async () => {}
-  const stop = async () => {}
-  const clearErrors = async () => {}
+  // TODO: replace local status updates with the Vapi SDK call lifecycle
+  // (vapi.start / vapi.stop + "call-start", "speech-start", "speech-end", "call-end" events)
+  const start = async () => {
+    if (!userId) {
+      setLimitError("You must be logged in to use this feature.")
+      return
+    }
+    setLimitError(null)
+    setStatus("connecting")
+    try {
+    } catch (error) {
+      console.error("Error starting Vapi:", error)
+      setStatus("idle")
+      setLimitError("Failed to start voice conversation. Please try again.")
+    }
+  }
+
+  const stop = async () => {
+    if (!isActive) return
+    isStoppingRef.current = true
+    setStatus("idle")
+  }
+
+  const toggle = () => (isActive ? stop() : start())
+
+  const clearErrors = async () => {
+    setLimitError(null)
+  }
 
   return {
     status,
     isActive,
     messages,
     duration,
+    currentMessage,
     curentUserMessage,
     start,
     stop,
+    toggle,
     clearErrors,
   }
 }
