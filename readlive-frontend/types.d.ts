@@ -87,3 +87,10 @@ export interface Messages {
   role: string
   content: string
 }
+
+export interface StartSessionResult {
+  success: boolean
+  sessionId?: string
+  error?: string
+  maxDUrationMinutes?: number
+}
