@@ -3,7 +3,7 @@
 import VoiceSession from "@/database/models/voiceSession.model"
 import { connectToDatabase } from "@/database/mongose"
 import { getCurrentPeriodStart } from "@/lib/subbscriptions-constants"
-import { StartSessionResult } from "@/types"
+import { EndSessionResult, StartSessionResult } from "@/types"
 
 export const startVoiceSession = async (
   bookId: string,
@@ -32,6 +32,36 @@ export const startVoiceSession = async (
     return {
       success: false,
       error: "Failed to start voice session. Please try again.",
+    }
+  }
+}
+
+export const endVoiceSession = async (
+  sessionId: string,
+  durationSeconds: number
+): Promise<EndSessionResult> => {
+  try {
+    await connectToDatabase()
+
+    const result = await VoiceSession.findByIdAndUpdate(sessionId, {
+      endedAt: new Date(),
+      durationSeconds,
+    })
+
+    if (!result) {
+      return {
+        success: false,
+        error: "Session not found.",
+      }
+    }
+    return {
+      success: true,
+    }
+  } catch (error) {
+    console.error("Error ending session:", error)
+    return {
+      success: false,
+      error: "Failed to end voice session. Please try again.",
     }
   }
 }
