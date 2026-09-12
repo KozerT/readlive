@@ -1,8 +1,8 @@
 // Brand color - used in JS files where CSS variables aren't available
-export const BRAND_COLOR = "var(--color-brand)";
-export const BRAND_COLOR_HOVER = "var(--color-brand-hover)";
+export const BRAND_COLOR = "var(--color-brand)"
+export const BRAND_COLOR_HOVER = "var(--color-brand-hover)"
 
-export const AI_ACCENT_COLOR = "var(--blue)";
+export const AI_ACCENT_COLOR = "var(--blue)"
 
 // Sample books for the homepage (using Open Library covers)
 export const sampleBooks = [
@@ -86,21 +86,21 @@ export const sampleBooks = [
     coverURL: "https://covers.openlibrary.org/b/isbn/9780451524935-L.jpg",
     coverColor: "var(--bg-primary)",
   },
-];
+]
 
 // File validation helpers
-export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
-export const ACCEPTED_PDF_TYPES = ["application/pdf"];
-export const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+export const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
+export const ACCEPTED_PDF_TYPES = ["application/pdf"]
+export const MAX_IMAGE_SIZE = 10 * 1024 * 1024 // 10MB
 export const ACCEPTED_IMAGE_TYPES = [
   "image/jpeg",
   "image/jpg",
   "image/png",
   "image/webp",
-];
+]
 
 // Pre-configured VAPI assistant ID (hardcoded for this app)
-export const ASSISTANT_ID = process.env.NEXT_PUBLIC_ASSISTANT_ID!;
+export const ASSISTANT_ID = process.env.NEXT_PUBLIC_ASSISTANT_ID!
 
 // 11Labs Voice IDs - Optimized for conversational AI
 // Voices selected for natural, engaging book conversations
@@ -132,22 +132,16 @@ export const voiceOptions = {
     name: "Sarah",
     description: "Young female, American, soft & approachable",
   },
-  // TODO: replace with a real ElevenLabs voice ID before wiring up TTS playback
-  erika: {
-    id: "REPLACE_ME",
-    name: "Erika",
-    description: "Young female, warm & expressive",
-  },
-};
+}
 
 // Voice categories for the selector UI
 export const voiceCategories = {
   male: ["dave", "daniel", "chris"],
-  female: ["rachel", "sarah", "erika"],
-};
+  female: ["rachel", "sarah"],
+}
 
 // Default voice
-export const DEFAULT_VOICE = "rachel";
+export const DEFAULT_VOICE = "rachel"
 
 // ElevenLabs voice settings optimized for conversational AI
 export const VOICE_SETTINGS = {
@@ -156,7 +150,7 @@ export const VOICE_SETTINGS = {
   style: 0, // Keep at 0 for conversational AI (higher = more latency, less stable)
   useSpeakerBoost: true, // Improves voice quality
   speed: 1.0, // Natural conversation speed
-};
+}
 
 // VAPI configuration for natural conversation
 // NOTE: These settings should be configured in the VAPI Dashboard for the assistant
@@ -180,4 +174,4 @@ export const VAPI_DASHBOARD_CONFIG = {
   backgroundDenoisingEnabled: true,
   backchannelingEnabled: true,
   fillerInjectionEnabled: false,
-};
+}
