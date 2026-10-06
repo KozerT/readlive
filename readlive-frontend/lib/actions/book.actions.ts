@@ -132,6 +132,42 @@ export const getAllBooks = async () => {
   }
 }
 
+// Full-text search over a book's segments, best matches first
+export const searchBookSegments = async (
+  bookId: string,
+  query: string,
+  numResults: number = 3
+) => {
+  try {
+    await connectToDatabase()
+
+    const segments = await BookSegment.find(
+      { bookId, $text: { $search: query } },
+      { score: { $meta: "textScore" } }
+    )
+      .select("content segmentIndex pageNumber")
+      .sort({ score: { $meta: "textScore" } })
+      .limit(numResults)
+      .lean()
+
+    return {
+      success: true as const,
+      data: serializeData(segments) as {
+        content: string
+        segmentIndex: number
+        pageNumber?: number
+      }[],
+    }
+  } catch (error) {
+    console.error("Error searching book segments", error)
+    return {
+      success: false as const,
+      data: [],
+      error,
+    }
+  }
+}
+
 export const getBookBySlug = async (slug: string) => {
   try {
     await connectToDatabase()

@@ -24,18 +24,9 @@ export type CallStatus =
   | "speaking"
   | "thinking";
 
-const useLatestRef = <T>(value: T) => {
-  const ref = useRef(value);
-  useEffect(() => {
-    ref.current = value;
-  }, [value]);
-  return ref;
-};
-
 const VAPI_API_KEY = process.env.NEXT_PUBLIC_VAPI_KEY;
 const TIMER_INTERVAL_MS = 1000;
 const SECONDS_PER_MINUTE = 60;
-const TIME_WARNING_THRESHOLD = 60; // Show warning when this many seconds remain
 
 type VapiErrorEvent = {
   type?: string;
@@ -101,9 +92,13 @@ export const useVapi = (book: IBook) => {
     ? limits.maxDurationPerSession * 60
     : 15 * 60;
 
-  const maxDurationRef = useLatestRef(maxDurationSeconds);
-
-  const durationRef = useLatestRef(duration);
+  // Latest values for the event handlers registered once on mount
+  const maxDurationRef = useRef(maxDurationSeconds);
+  const durationRef = useRef(duration);
+  useEffect(() => {
+    maxDurationRef.current = maxDurationSeconds;
+    durationRef.current = duration;
+  }, [maxDurationSeconds, duration]);
   const voice = book.persona || DEFAULT_VOICE;
 
   const isActive =
@@ -257,7 +252,10 @@ export const useVapi = (book: IBook) => {
         if (isServerEndedCall(error)) {
           const reason = endedReasonRef.current;
           // warn (not info) so Next.js forwards it to the dev terminal
-          console.warn("Vapi call ended by server:", reason ?? "unknown reason");
+          console.warn(
+            "Vapi call ended by server:",
+            reason ?? "unknown reason"
+          );
           finishCall("on server end");
           if (!isStoppingRef.current) setLimitError(getEndedMessage(reason));
           return;
