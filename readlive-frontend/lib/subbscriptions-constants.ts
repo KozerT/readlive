@@ -1,6 +1,6 @@
 export const getCurrentPeriodStart = (): Date => {
   const now = new Date()
-  return new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0) // Start of the current month
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)) // Start of the current month (UTC)
 }
 
 export const PLANS = {

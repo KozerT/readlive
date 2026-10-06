@@ -165,6 +165,11 @@ export const useVapi = (book: IBook) => {
 
             // Check duration limit
             if (newDuration >= maxDurationRef.current) {
+              if (timerRef.current) {
+                clearInterval(timerRef.current);
+                timerRef.current = null;
+              }
+              isStoppingRef.current = true;
               getVapi().stop();
               setLimitError(
                 `Session time limit (${Math.floor(
@@ -316,11 +321,8 @@ export const useVapi = (book: IBook) => {
 
     setLimitError(null);
     setStatus("connecting");
-    // #region agent log
-    fetch('http://127.0.0.1:7380/ingest/b0ae8923-d343-4818-9548-0ed3497fb6db',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'fb5164'},body:JSON.stringify({sessionId:'fb5164',hypothesisId:'B',location:'hooks/useVapi.ts:start:entry',message:'client start invoked',data:{bookPersona:book.persona??null,defaultVoice:DEFAULT_VOICE,resolvedVoiceKey:voice,hasUserId:Boolean(userId)},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     try {
-      const result = await startVoiceSession(book._id, userId);
+      const result = await startVoiceSession(book._id);
       if (!result.success) {
         setLimitError(
           result.error || "Session limit reached. Please upgrade your plan."
@@ -350,13 +352,17 @@ export const useVapi = (book: IBook) => {
           useSpeakerBoost: VOICE_SETTINGS.useSpeakerBoost,
         },
       };
-      // #region agent log
-      fetch('http://127.0.0.1:7380/ingest/b0ae8923-d343-4818-9548-0ed3497fb6db',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'fb5164'},body:JSON.stringify({sessionId:'fb5164',runId:'post-fix',hypothesisId:'B',location:'hooks/useVapi.ts:start',message:'vapi.start payload vs resolved persona voice',data:{bookPersona:book.persona??null,defaultVoice:DEFAULT_VOICE,resolvedVoiceKey:voice,resolvedVoiceName:resolvedVoice.name,resolvedVoiceId:resolvedVoice.id,sentVoiceId:startOverrides.voice.voiceId,assistantIdPresent:Boolean(ASSISTANT_ID),voiceOverrideIncluded:Boolean(startOverrides.voice),startOverrideKeys:Object.keys(startOverrides)},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
 
       await getVapi().start(ASSISTANT_ID, startOverrides);
     } catch (error) {
       console.error("Error starting Vapi:", error);
+      // Close the session created before the call failed to start
+      if (sessionIdRef.current) {
+        endVoiceSession(sessionIdRef.current, 0).catch((err) =>
+          console.error("Failed to end voice session after failed start:", err)
+        );
+        sessionIdRef.current = null;
+      }
       setStatus("idle");
       setLimitError("Failed to start voice conversation. Please try again.");
     }
@@ -378,6 +384,7 @@ export const useVapi = (book: IBook) => {
     isActive,
     messages,
     duration,
+    maxDurationSeconds,
     currentMessage,
     curentUserMessage,
     limitError,

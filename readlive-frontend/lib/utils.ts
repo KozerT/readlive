@@ -138,33 +138,21 @@ export async function parsePDFFile(file: File) {
 export const getVoice = (persona?: string) => {
   if (!persona) {
     const resolved = voiceOptions[DEFAULT_VOICE]
-    // #region agent log
-    fetch('http://127.0.0.1:7380/ingest/b0ae8923-d343-4818-9548-0ed3497fb6db',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'fb5164'},body:JSON.stringify({sessionId:'fb5164',hypothesisId:'A',location:'lib/utils.ts:getVoice',message:'getVoice empty persona fallback',data:{persona,defaultVoice:DEFAULT_VOICE,resolvedKey:DEFAULT_VOICE,resolvedName:resolved.name,resolvedId:resolved.id,path:'empty'},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     return resolved
   }
 
   // Find by voice ID
   const voiceEntry = Object.values(voiceOptions).find((v) => v.id === persona)
   if (voiceEntry) {
-    // #region agent log
-    fetch('http://127.0.0.1:7380/ingest/b0ae8923-d343-4818-9548-0ed3497fb6db',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'fb5164'},body:JSON.stringify({sessionId:'fb5164',hypothesisId:'D',location:'lib/utils.ts:getVoice',message:'getVoice matched by 11labs id',data:{persona,resolvedName:voiceEntry.name,resolvedId:voiceEntry.id,path:'by_id'},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     return voiceEntry
   }
 
   // Find by key
   const voiceByKey = voiceOptions[persona as keyof typeof voiceOptions]
   if (voiceByKey) {
-    // #region agent log
-    fetch('http://127.0.0.1:7380/ingest/b0ae8923-d343-4818-9548-0ed3497fb6db',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'fb5164'},body:JSON.stringify({sessionId:'fb5164',hypothesisId:'C',location:'lib/utils.ts:getVoice',message:'getVoice matched by persona key',data:{persona,resolvedName:voiceByKey.name,resolvedId:voiceByKey.id,path:'by_key'},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     return voiceByKey
   }
 
   const fallback = voiceOptions[DEFAULT_VOICE]
-  // #region agent log
-  fetch('http://127.0.0.1:7380/ingest/b0ae8923-d343-4818-9548-0ed3497fb6db',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'fb5164'},body:JSON.stringify({sessionId:'fb5164',hypothesisId:'D',location:'lib/utils.ts:getVoice',message:'getVoice unmatched persona fallback',data:{persona,defaultVoice:DEFAULT_VOICE,resolvedName:fallback.name,resolvedId:fallback.id,path:'unmatched_fallback'},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
   return fallback
 }

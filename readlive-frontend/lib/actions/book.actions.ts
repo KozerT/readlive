@@ -137,9 +137,6 @@ export const getBookBySlug = async (slug: string) => {
     await connectToDatabase()
     const book = await Book.findOne({ slug }).lean()
     const data = book ? serializeData(book) : null
-    // #region agent log
-    fetch('http://127.0.0.1:7380/ingest/b0ae8923-d343-4818-9548-0ed3497fb6db',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'fb5164'},body:JSON.stringify({sessionId:'fb5164',hypothesisId:'C',location:'lib/actions/book.actions.ts:getBookBySlug',message:'book persona loaded from db',data:{slug,persona:data?.persona ?? null,title:data?.title ?? null},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
 
     return {
       success: true as const,

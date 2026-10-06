@@ -1,10 +1,29 @@
 "use client"
 
-import useVapi from "@/hooks/useVapi"
+import useVapi, { CallStatus } from "@/hooks/useVapi"
 import { IBook } from "@/types"
 import { Clock3, Mic, MicOff, Radio } from "lucide-react"
 import Image from "next/image"
 import Transcript from "./Transcript"
+
+const STATUS_DISPLAY: Record<CallStatus, { label: string; dotClass: string }> =
+  {
+    idle: { label: "Ready", dotClass: "vapi-status-dot-ready" },
+    connecting: {
+      label: "Connecting...",
+      dotClass: "vapi-status-dot-connecting",
+    },
+    starting: { label: "Starting...", dotClass: "vapi-status-dot-connecting" },
+    listening: { label: "Listening", dotClass: "vapi-status-dot-listening" },
+    thinking: { label: "Thinking...", dotClass: "vapi-status-dot-thinking" },
+    speaking: { label: "Speaking", dotClass: "vapi-status-dot-speaking" },
+  }
+
+const formatTime = (totalSeconds: number) => {
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`
+}
 
 function VapiControls({ book }: { book: IBook }) {
   const {
@@ -12,6 +31,7 @@ function VapiControls({ book }: { book: IBook }) {
     isActive,
     messages,
     duration,
+    maxDurationSeconds,
     currentMessage,
     curentUserMessage: currentUserMessage,
     toggle,
@@ -88,10 +108,12 @@ function VapiControls({ book }: { book: IBook }) {
             <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-start">
               <div className="vapi-status-indicator">
                 <span
-                  className="vapi-status-dot vapi-status-dot-ready"
+                  className={`vapi-status-dot ${STATUS_DISPLAY[status].dotClass}`}
                   aria-hidden="true"
                 />
-                <span className="vapi-status-text">Ready</span>
+                <span className="vapi-status-text">
+                  {STATUS_DISPLAY[status].label}
+                </span>
               </div>
               <div className="vapi-status-indicator">
                 <Radio
@@ -105,7 +127,9 @@ function VapiControls({ book }: { book: IBook }) {
                   className="size-4 text-[var(--text-secondary)]"
                   aria-hidden="true"
                 />
-                <span className="vapi-status-text">0:00 / 15:00</span>
+                <span className="vapi-status-text">
+                  {formatTime(duration)} / {formatTime(maxDurationSeconds)}
+                </span>
               </div>
             </div>
           </div>
