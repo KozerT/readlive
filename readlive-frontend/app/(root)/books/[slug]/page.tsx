@@ -1,29 +1,29 @@
-import VapiControls from "@/components/VapiControls"
-import { getBookBySlug } from "@/lib/actions/book.actions"
-import { auth } from "@clerk/nextjs/server"
-import { ArrowLeft } from "lucide-react"
-import Link from "next/link"
-import { redirect } from "next/navigation"
+import VapiControls from "@/components/VapiControls";
+import { getBookBySlug } from "@/lib/actions/book.actions";
+import { auth } from "@clerk/nextjs/server";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 
 type BookPageProps = {
-  params: Promise<{ slug: string }>
-}
+  params: Promise<{ slug: string }>;
+};
 
 export default async function BookPage({ params }: BookPageProps) {
-  const { userId } = await auth()
+  const { userId } = await auth();
 
   if (!userId) {
-    redirect("/")
+    redirect("/");
   }
 
-  const { slug } = await params
-  const result = await getBookBySlug(slug)
+  const { slug } = await params;
+  const result = await getBookBySlug(slug);
 
   if (!result.success || !result.data) {
-    redirect("/")
+    redirect("/");
   }
 
-  const book = result.data
+  const book = result.data;
 
   return (
     <main className="book-page-container">
@@ -34,5 +34,5 @@ export default async function BookPage({ params }: BookPageProps) {
         <VapiControls book={book} />
       </div>
     </main>
-  )
+  );
 }

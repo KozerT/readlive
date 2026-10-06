@@ -1,24 +1,25 @@
-"use server"
+"use server";
 
-import Book from "@/database/models/book.model"
-import BookSegment from "@/database/models/bookSegment.model"
-import { connectToDatabase } from "@/database/mongose"
-import { generateSlug, serializeData } from "@/lib/utils"
-import { CreateBook, TextSegment } from "@/types"
+import Book from "@/database/models/book.model";
+import BookSegment from "@/database/models/bookSegment.model";
+import { connectToDatabase } from "@/database/mongose";
+import { generateSlug, serializeData } from "@/lib/utils";
+import { CreateBook, TextSegment } from "@/types";
+import { revalidatePath } from "next/cache";
 
 export const createBook = async (data: CreateBook) => {
   try {
-    await connectToDatabase()
-    const slug = generateSlug(data.title)
+    await connectToDatabase();
+    const slug = generateSlug(data.title);
 
-    const existingBook = await Book.findOne({ slug }).lean()
+    const existingBook = await Book.findOne({ slug }).lean();
 
     if (existingBook) {
       return {
         success: true,
         data: serializeData(existingBook),
         alreadyExist: true,
-      }
+      };
     }
 
     //TODO: Check subscription limits before creating a book
@@ -35,20 +36,23 @@ export const createBook = async (data: CreateBook) => {
       clerkId: data.clerkId,
       slug,
       totalSegments: 0,
-    })
+    });
+
+    revalidatePath("/");
+
     return {
       success: true as const,
       data: serializeData(book),
-    }
+    };
   } catch (error) {
-    console.error("Error creating a book", error)
+    console.error("Error creating a book", error);
     return {
       success: false as const,
       error,
       isBillingError: false as const,
-    }
+    };
   }
-}
+};
 
 export const saveBookSegments = async (
   bookId: string,
@@ -56,8 +60,8 @@ export const saveBookSegments = async (
   segments: TextSegment[]
 ) => {
   try {
-    await connectToDatabase()
-    console.log("Saving book segments...")
+    await connectToDatabase();
+    console.log("Saving book segments...");
 
     const segmentsToInsert = segments.map(
       ({ text, segmentIndex, pageNumber, wordCount }) => ({
@@ -68,75 +72,75 @@ export const saveBookSegments = async (
         pageNumber,
         wordCount,
       })
-    )
-    await BookSegment.insertMany(segmentsToInsert)
-    await Book.findByIdAndUpdate(bookId, { totalSegments: segments.length })
-    console.log("Successfully saved segments")
+    );
+    await BookSegment.insertMany(segmentsToInsert);
+    await Book.findByIdAndUpdate(bookId, { totalSegments: segments.length });
+    console.log("Successfully saved segments");
     return {
       success: true,
       data: { segmentsCreated: segments.length },
-    }
+    };
   } catch (error) {
-    console.error("Error saving book segment", error)
-    await BookSegment.deleteMany({ bookId })
-    await Book.findByIdAndDelete(bookId)
+    console.error("Error saving book segment", error);
+    await BookSegment.deleteMany({ bookId });
+    await Book.findByIdAndDelete(bookId);
     console.log(
       "Deleted book segments and book due to failure to save segments"
-    )
+    );
     return {
       success: false,
       error,
-    }
+    };
   }
-}
+};
 
 export const checkBookExists = async (title: string) => {
   try {
-    await connectToDatabase()
-    const slug = generateSlug(title)
-    const existingBook = await Book.findOne({ slug }).lean()
+    await connectToDatabase();
+    const slug = generateSlug(title);
+    const existingBook = await Book.findOne({ slug }).lean();
     if (existingBook) {
       return {
         exists: true as const,
         book: serializeData(existingBook),
-      }
+      };
     }
     return {
       exists: false as const,
       book: null,
-    }
+    };
   } catch (error) {
-    console.error("Error checking book exist", error)
+    console.error("Error checking book exist", error);
     return {
       exists: false as const,
       book: null,
       error,
-    }
+    };
   }
-}
+};
 
 export const getAllBooks = async () => {
   try {
-    await connectToDatabase()
-    const books = await Book.find({}).sort({ createdAt: -1 }).lean()
+    await connectToDatabase();
+    const books = await Book.find({}).sort({ createdAt: -1 }).lean();
     return {
       success: true,
       data: serializeData(books),
-    }
+    };
   } catch (error) {
-    console.error("Error fetching all books", error)
+    console.error("Error fetching all books", error);
     return {
       success: false,
       error,
-    }
+    };
   }
-}
+};
 
 type SegmentMatch = {
-  content: string
-  segmentIndex: number
-  pageNumber?: number
-}
+  content: string;
+  segmentIndex: number;
+  pageNumber?: number;
+};
 
 // Full-text search over a book's segments, best matches first
 export const searchBookSegments = async (
@@ -149,13 +153,13 @@ export const searchBookSegments = async (
     // as $text operators (exact phrase, negation)
     const keywords = query
       .split(/[^\p{L}\p{N}]+/u)
-      .filter((word) => word.length > 1)
+      .filter((word) => word.length > 1);
 
     if (keywords.length === 0) {
-      return { success: true as const, data: [] as SegmentMatch[] }
+      return { success: true as const, data: [] as SegmentMatch[] };
     }
 
-    await connectToDatabase()
+    await connectToDatabase();
 
     const segments = await BookSegment.find(
       { bookId, $text: { $search: keywords.join(" ") } },
@@ -164,38 +168,38 @@ export const searchBookSegments = async (
       .select("content segmentIndex pageNumber")
       .sort({ score: { $meta: "textScore" } })
       .limit(numResults)
-      .lean()
+      .lean();
 
     return {
       success: true as const,
       data: serializeData(segments) as SegmentMatch[],
-    }
+    };
   } catch (error) {
-    console.error("Error searching book segments", error)
+    console.error("Error searching book segments", error);
     return {
       success: false as const,
       data: [] as SegmentMatch[],
       error,
-    }
+    };
   }
-}
+};
 
 export const getBookBySlug = async (slug: string) => {
   try {
-    await connectToDatabase()
-    const book = await Book.findOne({ slug }).lean()
-    const data = book ? serializeData(book) : null
+    await connectToDatabase();
+    const book = await Book.findOne({ slug }).lean();
+    const data = book ? serializeData(book) : null;
 
     return {
       success: true as const,
       data,
-    }
+    };
   } catch (error) {
-    console.error("Error fetching book", error)
+    console.error("Error fetching book", error);
     return {
       success: false as const,
       data: null,
       error,
-    }
+    };
   }
-}
+};

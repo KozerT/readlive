@@ -1,10 +1,12 @@
-import BookCard from "@/components/BookCard"
-import HeroSection from "@/components/HeroSection"
-import { getAllBooks } from "@/lib/actions/book.actions"
+export const dynamic = "force-dynamic";
+
+import BookCard from "@/components/BookCard";
+import HeroSection from "@/components/HeroSection";
+import { getAllBooks } from "@/lib/actions/book.actions";
 
 export default async function BookDetailsPage() {
-  const bookResults = await getAllBooks()
-  const books = bookResults.success ? (bookResults.data ?? []) : []
+  const bookResults = await getAllBooks();
+  const books = bookResults.success ? (bookResults.data ?? []) : [];
 
   return (
     <main className="container wrapper">
@@ -21,5 +23,5 @@ export default async function BookDetailsPage() {
         ))}
       </div>
     </main>
-  )
+  );
 }
