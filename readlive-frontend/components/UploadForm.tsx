@@ -18,21 +18,23 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { upload } from "@vercel/blob/client"
 import { FileText, ImagePlus } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useSyncExternalStore } from "react"
+import { useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 
 type VoiceKey = keyof typeof voiceOptions
 
+// false while server rendering and hydrating, true once mounted on the client
+const subscribeToNothing = () => () => {}
+
 const UploadForm = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isMounted, setIsMounted] = useState(false)
+  const isMounted = useSyncExternalStore(
+    subscribeToNothing,
+    () => true,
+    () => false
+  )
   const { userId } = useAuth()
   const router = useRouter()
-
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
 
   const form = useForm<BookUploadFormValues>({
     resolver: zodResolver(UploadSchema),
@@ -45,13 +47,12 @@ const UploadForm = () => {
     },
   })
 
-  const selectedVoice = form.watch("voice")
+  const selectedVoice = useWatch({ control: form.control, name: "voice" })
 
   const onSubmit = async (data: BookUploadFormValues) => {
     if (!userId) {
       return toast.error("Please login to upload books")
     }
-    setIsSubmitting(true)
     // TODO: POST to the book upload endpoint once available.
     try {
       const existsCheck = await checkBookExists(data.title)
@@ -147,8 +148,6 @@ const UploadForm = () => {
     } catch (error) {
       console.error(error)
       toast.error("Failed to upload a book. Please try again later")
-    } finally {
-      setIsSubmitting(false)
     }
   }
 

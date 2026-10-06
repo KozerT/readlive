@@ -24,7 +24,6 @@ export default async function BookPage({ params }: BookPageProps) {
   }
 
   const book = result.data
-  const persona = book.persona?.trim() || "Scholar"
 
   return (
     <main className="book-page-container">
