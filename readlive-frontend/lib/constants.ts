@@ -132,22 +132,16 @@ export const voiceOptions = {
     name: "Sarah",
     description: "Young female, American, soft & approachable",
   },
-  // TODO: replace with a real ElevenLabs voice ID before wiring up TTS playback
-  erika: {
-    id: "REPLACE_ME",
-    name: "Erika",
-    description: "Young female, warm & expressive",
-  },
 };
 
 // Voice categories for the selector UI
 export const voiceCategories = {
   male: ["dave", "daniel", "chris"],
-  female: ["rachel", "sarah", "erika"],
+  female: ["rachel", "sarah"],
 };
 
 // Default voice
-export const DEFAULT_VOICE = "rachel";
+export const DEFAULT_VOICE = "sarah";
 
 // ElevenLabs voice settings optimized for conversational AI
 export const VOICE_SETTINGS = {
@@ -157,6 +151,10 @@ export const VOICE_SETTINGS = {
   useSpeakerBoost: true, // Improves voice quality
   speed: 1.0, // Natural conversation speed
 };
+
+// Seconds of silence before Vapi hangs up (Vapi default is 30).
+// Sent as an override on every call, so it wins over the dashboard value.
+export const SILENCE_TIMEOUT_SECONDS = 120;
 
 // VAPI configuration for natural conversation
 // NOTE: These settings should be configured in the VAPI Dashboard for the assistant
@@ -173,7 +171,7 @@ export const VAPI_DASHBOARD_CONFIG = {
     backoffSeconds: 1.0,
   },
   // Timing settings
-  silenceTimeoutSeconds: 30,
+  silenceTimeoutSeconds: SILENCE_TIMEOUT_SECONDS,
   responseDelaySeconds: 0.4,
   llmRequestDelaySeconds: 0.1,
   // Conversation features

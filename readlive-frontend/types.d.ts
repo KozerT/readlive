@@ -82,3 +82,19 @@ export interface BookCardProps {
   coverURL: string
   slug: string
 }
+
+export interface Messages {
+  role: string
+  content: string
+}
+
+export interface StartSessionResult {
+  success: boolean
+  sessionId?: string
+  error?: string
+  maxDUrationMinutes?: number
+}
+export interface EndSessionResult {
+  success: boolean
+  error?: string
+}

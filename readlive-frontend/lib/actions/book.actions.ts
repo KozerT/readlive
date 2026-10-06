@@ -136,10 +136,11 @@ export const getBookBySlug = async (slug: string) => {
   try {
     await connectToDatabase()
     const book = await Book.findOne({ slug }).lean()
+    const data = book ? serializeData(book) : null
 
     return {
       success: true as const,
-      data: book ? serializeData(book) : null,
+      data,
     }
   } catch (error) {
     console.error("Error fetching book", error)

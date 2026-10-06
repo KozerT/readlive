@@ -416,19 +416,30 @@
     @apply absolute -bottom-2 -right-2 sm:-bottom-3 sm:-right-3;
   }
   .vapi-pulse-ring {
-    @apply absolute inset-0 w-[56px] h-[56px] sm:w-[68px] sm:h-[68px] bg-[var(--success)] rounded-full opacity-30 animate-ping;
+    @apply absolute inset-0 w-[56px] h-[56px] sm:w-[68px] sm:h-[68px] bg-white rounded-full pointer-events-none;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.9),
+      0 0 18px 4px rgba(255, 255, 255, 0.8);
+    animation: vapi-pulse 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .vapi-pulse-ring {
+      animation: none;
+      transform: scale(1.2);
+      opacity: 0.6;
+    }
   }
   .vapi-mic-btn {
     @apply relative w-[56px] h-[56px] sm:w-[68px] sm:h-[68px] cursor-pointer rounded-full flex items-center justify-center transition-all duration-300 border border-[var(--border-subtle)] bg-white shadow-soft-md;
 
-    &:hover {
+    &:hover:not(:disabled) {
       transform: scale(1.08);
       box-shadow: var(--shadow-soft-lg);
     }
-    &:hover svg {
+    &:hover:not(:disabled) svg {
       @apply text-[var(--color-brand)];
     }
-    &:active {
+    &:active:not(:disabled) {
       transform: scale(0.95);
     }
     &:disabled {
@@ -436,7 +447,7 @@
     }
   }
   .vapi-mic-btn-active {
-    @apply bg-white border-[var(--success)];
+    @apply bg-white;
   }
   .vapi-mic-btn-inactive {
     @apply bg-white;
@@ -580,13 +591,13 @@
     @apply flex justify-start;
   }
   .transcript-bubble {
-    @apply max-w-[85%] px-6 py-4 text-base font-normal leading-relaxed rounded-[22px] shadow-soft-sm;
+    @apply w-[85%] sm:w-[75%] px-6 py-4 text-base font-normal leading-relaxed rounded-[22px] shadow-soft-sm break-words;
   }
   .transcript-bubble-user {
-    @apply bg-[var(--color-brand)] text-white rounded-tr-sm font-medium;
+    @apply bg-[var(--color-brand)] text-white rounded-br-sm font-medium;
   }
   .transcript-bubble-assistant {
-    @apply bg-[var(--bg-secondary)] text-[var(--text-primary)] rounded-tl-sm border border-[var(--border-subtle)];
+    @apply bg-[var(--bg-secondary)] text-[var(--text-primary)] rounded-bl-sm border border-[var(--border-subtle)];
   }
   .transcript-cursor {
     @apply inline-block w-1 h-5 ml-1.5 bg-[var(--text-primary)] animate-pulse rounded-full align-middle;
@@ -965,4 +976,19 @@ button[data-variant="unstyled"] *,
   border-radius: 0.75rem;
   font-size: 1.125rem;
   border: 1px solid var(--border-subtle);
+}
+
+@keyframes vapi-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  70% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
 }
