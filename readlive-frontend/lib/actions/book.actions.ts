@@ -132,6 +132,12 @@ export const getAllBooks = async () => {
   }
 }
 
+type SegmentMatch = {
+  content: string
+  segmentIndex: number
+  pageNumber?: number
+}
+
 // Full-text search over a book's segments, best matches first
 export const searchBookSegments = async (
   bookId: string,
@@ -139,10 +145,20 @@ export const searchBookSegments = async (
   numResults: number = 3
 ) => {
   try {
+    // Punctuation is dropped so quotes and dashes in the query are not read
+    // as $text operators (exact phrase, negation)
+    const keywords = query
+      .split(/[^\p{L}\p{N}]+/u)
+      .filter((word) => word.length > 1)
+
+    if (keywords.length === 0) {
+      return { success: true as const, data: [] as SegmentMatch[] }
+    }
+
     await connectToDatabase()
 
     const segments = await BookSegment.find(
-      { bookId, $text: { $search: query } },
+      { bookId, $text: { $search: keywords.join(" ") } },
       { score: { $meta: "textScore" } }
     )
       .select("content segmentIndex pageNumber")
@@ -152,17 +168,13 @@ export const searchBookSegments = async (
 
     return {
       success: true as const,
-      data: serializeData(segments) as {
-        content: string
-        segmentIndex: number
-        pageNumber?: number
-      }[],
+      data: serializeData(segments) as SegmentMatch[],
     }
   } catch (error) {
     console.error("Error searching book segments", error)
     return {
       success: false as const,
-      data: [],
+      data: [] as SegmentMatch[],
       error,
     }
   }
