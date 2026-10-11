@@ -52,7 +52,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       : isBillingLimit
         ? 403
         : 500
-    console.error("Upload error", e)
+    if (isBillingLimit) console.warn("Upload blocked by plan limit")
+    else console.error("Upload error", e)
     const clientMessage =
       status === 401
         ? "Unauthorized"

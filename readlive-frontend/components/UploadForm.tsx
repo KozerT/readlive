@@ -6,6 +6,7 @@ import { Form } from "@/components/ui/form"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
   checkBookExists,
+  checkBookLimit,
   createBook,
   saveBookSegments,
 } from "@/lib/actions/book.actions"
@@ -49,6 +50,19 @@ const UploadForm = () => {
 
   const selectedVoice = useWatch({ control: form.control, name: "voice" })
 
+  const showLimitError = (message: string | null, isBillingError?: boolean) => {
+    if (!isBillingError) {
+      toast.error(message || "Failed to create a book.")
+      return
+    }
+    toast.error(message || "You've reached your plan's book limit.", {
+      action: {
+        label: "Upgrade",
+        onClick: () => router.push("/subscriptions"),
+      },
+    })
+  }
+
   const onSubmit = async (data: BookUploadFormValues) => {
     if (!userId) {
       return toast.error("Please login to upload books")
@@ -61,6 +75,13 @@ const UploadForm = () => {
         toast.info("Book with the same title already exists.")
         form.reset()
         router.push(`/books/${existsCheck.book.slug}`)
+        return
+      }
+
+      const limitCheck = await checkBookLimit()
+
+      if (!limitCheck.allowed) {
+        showLimitError(limitCheck.error, limitCheck.isBillingError)
         return
       }
 
@@ -118,10 +139,7 @@ const UploadForm = () => {
       })
 
       if (!book.success) {
-        toast.error((book.error as string) || "Failed to create a book.")
-        if (book.isBillingError) {
-          router.push("/subscriptions")
-        }
+        showLimitError(book.error as string, book.isBillingError)
         return
       }
 
@@ -147,7 +165,13 @@ const UploadForm = () => {
       router.push("/")
     } catch (error) {
       console.error(error)
-      toast.error("Failed to upload a book. Please try again later")
+      // Blob client hides the server's reason, so re-check whether a plan limit caused it
+      const limitCheck = await checkBookLimit().catch(() => null)
+      if (limitCheck && !limitCheck.allowed && limitCheck.isBillingError) {
+        showLimitError(limitCheck.error, true)
+      } else {
+        toast.error("Failed to upload a book. Please try again later")
+      }
     }
   }
 

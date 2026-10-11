@@ -1,5 +1,6 @@
 import VapiControls from "@/components/VapiControls";
 import { getBookBySlug } from "@/lib/actions/book.actions";
+import { getSessionUsage } from "@/lib/actions/session.actions";
 import { auth } from "@clerk/nextjs/server";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -24,6 +25,7 @@ export default async function BookPage({ params }: BookPageProps) {
   }
 
   const book = result.data;
+  const sessionUsage = await getSessionUsage();
 
   return (
     <main className="book-page-container">
@@ -31,7 +33,7 @@ export default async function BookPage({ params }: BookPageProps) {
         <ArrowLeft className="size-5" aria-hidden="true" />
       </Link>
       <div className="vapi-main-container gap-8 sm:gap-12">
-        <VapiControls book={book} />
+        <VapiControls book={book} sessionUsage={sessionUsage} />
       </div>
     </main>
   );

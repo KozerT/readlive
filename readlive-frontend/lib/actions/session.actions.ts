@@ -4,7 +4,7 @@ import VoiceSession from "@/database/models/voiceSession.model"
 import { connectToDatabase } from "@/database/mongose"
 import { getUserSubscription } from "@/lib/subscription.server"
 import { getCurrentPeriodStart } from "@/lib/subbscriptions-constants"
-import { EndSessionResult, StartSessionResult } from "@/types"
+import { EndSessionResult, SessionUsage, StartSessionResult } from "@/types"
 import { auth } from "@clerk/nextjs/server"
 
 export const startVoiceSession = async (
@@ -97,5 +97,30 @@ export const endVoiceSession = async (
       success: false,
       error: "Failed to end voice session. Please try again.",
     }
+  }
+}
+
+export const getSessionUsage = async (): Promise<SessionUsage | null> => {
+  try {
+    const { userId, plan, limits } = await getUserSubscription()
+    if (!userId) return null
+
+    await connectToDatabase()
+
+    const used = await VoiceSession.countDocuments({
+      clerkId: userId,
+      billingPeriodStart: getCurrentPeriodStart(),
+    })
+
+    return {
+      plan,
+      used,
+      max: Number.isFinite(limits.maxSessionsPerMonth)
+        ? limits.maxSessionsPerMonth
+        : null,
+    }
+  } catch (error) {
+    console.error("Error fetching session usage:", error)
+    return null
   }
 }

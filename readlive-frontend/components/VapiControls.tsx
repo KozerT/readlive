@@ -1,9 +1,10 @@
 "use client";
 
 import useVapi, { CallStatus } from "@/hooks/useVapi";
-import { IBook } from "@/types";
+import { IBook, SessionUsage } from "@/types";
 import { Clock3, Mic, MicOff, Radio } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import Transcript from "./Transcript";
 
 const STATUS_DISPLAY: Record<CallStatus, { label: string; dotClass: string }> =
@@ -25,7 +26,13 @@ const formatTime = (totalSeconds: number) => {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 };
 
-function VapiControls({ book }: { book: IBook }) {
+function VapiControls({
+  book,
+  sessionUsage,
+}: {
+  book: IBook;
+  sessionUsage: SessionUsage | null;
+}) {
   const {
     status,
     isActive,
@@ -34,8 +41,14 @@ function VapiControls({ book }: { book: IBook }) {
     maxDurationSeconds,
     currentMessage,
     curentUserMessage: currentUserMessage,
+    limitError,
+    sessionsUsed,
     toggle,
-  } = useVapi(book);
+  } = useVapi(book, sessionUsage?.used ?? 0);
+
+  const maxSessions = sessionUsage?.max ?? null;
+  const remainingSessions =
+    maxSessions === null ? null : Math.max(0, maxSessions - sessionsUsed);
 
   const isBusy = isActive && (status === "speaking" || status === "thinking");
 
@@ -136,7 +149,37 @@ function VapiControls({ book }: { book: IBook }) {
                   {formatTime(duration)} / {formatTime(maxDurationSeconds)}
                 </span>
               </div>
+              {sessionUsage && (
+                <div className="vapi-status-indicator">
+                  <Mic
+                    className="size-4 text-[var(--text-secondary)]"
+                    aria-hidden="true"
+                  />
+                  <span className="vapi-status-text">
+                    {maxSessions === null
+                      ? "Unlimited sessions"
+                      : `${remainingSessions} of ${maxSessions} sessions left this month`}
+                  </span>
+                </div>
+              )}
             </div>
+            {(limitError || remainingSessions === 0) && (
+              <div
+                role="alert"
+                className="flex flex-wrap items-center justify-center gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-secondary)] px-4 py-3 text-sm text-[var(--text-primary)] sm:justify-start"
+              >
+                <span>
+                  {limitError ||
+                    "You've used all your voice sessions this month."}
+                </span>
+                <Link
+                  href="/subscriptions"
+                  className="font-semibold underline underline-offset-2"
+                >
+                  Upgrade plan
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </section>

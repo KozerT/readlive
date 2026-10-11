@@ -70,7 +70,7 @@ function getVapi() {
   return vapi;
 }
 
-export const useVapi = (book: IBook) => {
+export const useVapi = (book: IBook, initialSessionsUsed = 0) => {
   const { userId } = useAuth();
   const { limits } = useSubscription();
 
@@ -82,6 +82,7 @@ export const useVapi = (book: IBook) => {
   const [curentUserMessage, setCurrentUserMessage] = useState<string>("");
   const [duration, setDuration] = useState(0);
   const [limitError, setLimitError] = useState<string | null>(null);
+  const [sessionsUsed, setSessionsUsed] = useState(initialSessionsUsed);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number | null>(null);
@@ -95,6 +96,8 @@ export const useVapi = (book: IBook) => {
   // Latest values for the event handlers registered once on mount
   const maxDurationRef = useRef(maxDurationSeconds);
   const durationRef = useRef(duration);
+  // Set by the effect below so stop() can tear down without waiting for SDK events
+  const finishCallRef = useRef<((context: string) => void) | null>(null);
   useEffect(() => {
     maxDurationRef.current = maxDurationSeconds;
     durationRef.current = duration;
@@ -139,6 +142,8 @@ export const useVapi = (book: IBook) => {
 
       startTimeRef.current = null;
     };
+
+    finishCallRef.current = finishCall;
 
     const handlers = {
       "call-start": () => {
@@ -330,6 +335,7 @@ export const useVapi = (book: IBook) => {
       }
 
       sessionIdRef.current = result.sessionId || null;
+      setSessionsUsed((used) => used + 1);
       const firstMessage = `Hello! Nice to meet you!You are now in a voice conversation with ${book.persona}. Have you actually read the book "${book.title}"? Or shall we dive into the story?`;
       const resolvedVoice = getVoice(voice);
       const startOverrides = {
@@ -368,7 +374,14 @@ export const useVapi = (book: IBook) => {
 
   const stop = async () => {
     isStoppingRef.current = true;
-    await getVapi().stop();
+    try {
+      await getVapi().stop();
+    } catch (error) {
+      console.error("Error stopping Vapi:", error);
+    }
+    // "call-end" is not guaranteed after stop(), so reset the UI ourselves
+    // (safe to run twice: finishCall clears the timer and session ref)
+    finishCallRef.current?.("on stop");
   };
 
   const toggle = () => (isActive ? stop() : start());
@@ -386,6 +399,7 @@ export const useVapi = (book: IBook) => {
     currentMessage,
     curentUserMessage,
     limitError,
+    sessionsUsed,
     start,
     stop,
     toggle,

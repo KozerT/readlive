@@ -215,3 +215,34 @@ export const getBookBySlug = async (slug: string) => {
     };
   }
 };
+
+export const checkBookLimit = async () => {
+  try {
+    const { userId, plan, limits } = await getUserSubscription();
+
+    if (!userId) {
+      return {
+        allowed: false as const,
+        error: "You must be logged in to add a book.",
+        isBillingError: false as const,
+      };
+    }
+
+    const error = await getBookLimitError(userId, limits);
+
+    return {
+      allowed: !error,
+      error,
+      isBillingError: !!error,
+      plan,
+      maxBooks: limits.maxBooks,
+    };
+  } catch (error) {
+    console.error("Error checking book limit", error);
+    return {
+      allowed: false as const,
+      error: "Could not verify your plan. Please try again.",
+      isBillingError: false as const,
+    };
+  }
+};
