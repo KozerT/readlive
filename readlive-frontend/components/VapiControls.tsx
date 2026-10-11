@@ -2,7 +2,7 @@
 
 import useVapi, { CallStatus } from "@/hooks/useVapi";
 import { IBook, SessionUsage } from "@/types";
-import { Clock3, Mic, MicOff, Radio } from "lucide-react";
+import { Clock3, Crown, Mic, MicOff, Radio } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import Transcript from "./Transcript";
@@ -19,6 +19,12 @@ const STATUS_DISPLAY: Record<CallStatus, { label: string; dotClass: string }> =
     thinking: { label: "Thinking...", dotClass: "vapi-status-dot-thinking" },
     speaking: { label: "Speaking", dotClass: "vapi-status-dot-speaking" },
   };
+
+const PLAN_LABELS: Record<string, string> = {
+  free: "Free",
+  standard: "Standard",
+  pro: "Pro",
+};
 
 const formatTime = (totalSeconds: number) => {
   const minutes = Math.floor(totalSeconds / 60);
@@ -161,6 +167,17 @@ function VapiControls({
                     {maxSessions === null
                       ? "Unlimited sessions"
                       : `${remainingSessions} of ${maxSessions} sessions left this month`}
+                  </span>
+                </div>
+              )}
+              {sessionUsage && (
+                <div className="vapi-status-indicator">
+                  <Crown
+                    className="size-4 text-[var(--blue)]"
+                    aria-hidden="true"
+                  />
+                  <span className="vapi-status-text">
+                    {PLAN_LABELS[sessionUsage.plan] ?? sessionUsage.plan} plan
                   </span>
                 </div>
               )}
