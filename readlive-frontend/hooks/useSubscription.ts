@@ -7,24 +7,41 @@ import {
 } from "@/lib/subbscriptions-constants"
 import { useAuth, useSession } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
-import { useEffect, useRef } from "react"
+import { useEffect } from "react"
 
 export const useSubscription = () => {
   const { has, isLoaded } = useAuth()
   const { session } = useSession()
   const router = useRouter()
-  const refreshedRef = useRef(false)
 
-  // The plan lives in the session token, which can be up to a minute old after
-  // an upgrade. Reload it once on mount so a new plan applies immediately.
+  // The plan lives in the session token, which Clerk caches for up to a minute.
+  // Force a fresh token on mount and whenever the tab regains focus (e.g. after
+  // switching plans elsewhere), then refresh server components that read it.
   useEffect(() => {
-    if (!isLoaded || !session || refreshedRef.current) return
-    refreshedRef.current = true
-    session
-      .reload()
-      .then(() => router.refresh())
-      .catch((err) => console.error("Failed to refresh session:", err))
-  }, [isLoaded, session, router])
+    if (!isLoaded || !session) return
+
+    let cancelled = false
+    const refreshToken = async () => {
+      try {
+        await session.getToken({ skipCache: true })
+        if (!cancelled) router.refresh()
+      } catch (err) {
+        console.error("Failed to refresh session token:", err)
+      }
+    }
+
+    refreshToken()
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refreshToken()
+    }
+    document.addEventListener("visibilitychange", onVisible)
+    return () => {
+      cancelled = true
+      document.removeEventListener("visibilitychange", onVisible)
+    }
+    // session.id, not the object: its identity can change on every token update
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, session?.id, router])
 
   if (!isLoaded) {
     return {
