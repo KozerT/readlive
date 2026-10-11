@@ -3,7 +3,8 @@ export const dynamic = "force-dynamic";
 import BookCard from "@/components/BookCard";
 import HeroSection from "@/components/HeroSection";
 import { searchBooks } from "@/lib/actions/book.actions";
-import { Search } from "lucide-react";
+import SearchBar from "@/components/SearchBar";
+import { Suspense } from "react";
 
 export default async function BookDetailsPage({
   searchParams,
@@ -21,19 +22,9 @@ export default async function BookDetailsPage({
       <HeroSection />
       <div className="library-filter-bar">
         <h2 className="section-title">Recent Books</h2>
-        <form action="/" method="GET" role="search" className="library-search-wrapper">
-          <input
-            type="search"
-            name="query"
-            defaultValue={query}
-            placeholder="Search by title or author"
-            aria-label="Search books by title or author"
-            className="library-search-input"
-          />
-          <button type="submit" aria-label="Search" className="px-4">
-            <Search className="size-5 text-[var(--text-muted)]" />
-          </button>
-        </form>
+        <Suspense>
+          <SearchBar />
+        </Suspense>
       </div>
       {books.length === 0 ? (
         <p className="text-[var(--text-muted)]">
