@@ -1,4 +1,9 @@
-import { MAX_FILE_SIZE } from "@/lib/constants"
+import {
+  ACCEPTED_IMAGE_TYPES,
+  ACCEPTED_PDF_TYPES,
+  MAX_FILE_SIZE,
+  MAX_IMAGE_SIZE,
+} from "@/lib/constants"
 import {
   getBookLimitError,
   getUserSubscription,
@@ -12,7 +17,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     const jsonResponse = await handleUpload({
       body,
       request,
-      onBeforeGenerateToken: async () => {
+      onBeforeGenerateToken: async (_pathname, clientPayload) => {
         const { userId, limits } = await getUserSubscription()
 
         if (!userId) {
@@ -24,15 +29,15 @@ export async function POST(request: Request): Promise<NextResponse> {
           throw new Error(`BillingLimit: ${limitError}`)
         }
 
+        const isCover = clientPayload === "cover"
+
         return {
-          allowedContentTypes: [
-            "application/pdf",
-            "image/jpeg",
-            "image/png",
-            "image/webp",
-          ],
+          // Each kind gets its own type and size cap, enforced by Blob itself
+          allowedContentTypes: isCover
+            ? ACCEPTED_IMAGE_TYPES
+            : ACCEPTED_PDF_TYPES,
           addRandomSuffix: true,
-          maximumSizeInBytes: MAX_FILE_SIZE,
+          maximumSizeInBytes: isCover ? MAX_IMAGE_SIZE : MAX_FILE_SIZE,
           tokenPayload: JSON.stringify({ userId }),
         }
       },

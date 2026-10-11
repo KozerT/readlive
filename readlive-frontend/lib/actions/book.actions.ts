@@ -10,6 +10,17 @@ import { revalidatePath } from "next/cache";
 
 export const createBook = async (data: CreateBook) => {
   try {
+    // Identity comes from the Clerk session only, never from the payload
+    const { userId, limits } = await getUserSubscription();
+
+    if (!userId) {
+      return {
+        success: false as const,
+        error: "You must be logged in to add a book.",
+        isBillingError: false as const,
+      };
+    }
+
     await connectToDatabase();
     const slug = generateSlug(data.title);
 
@@ -20,16 +31,6 @@ export const createBook = async (data: CreateBook) => {
         success: true,
         data: serializeData(existingBook),
         alreadyExist: true,
-      };
-    }
-
-    const { userId, limits } = await getUserSubscription();
-
-    if (!userId) {
-      return {
-        success: false as const,
-        error: "You must be logged in to add a book.",
-        isBillingError: false as const,
       };
     }
 
@@ -44,8 +45,15 @@ export const createBook = async (data: CreateBook) => {
     }
 
     const book = await Book.create({
-      ...data,
       clerkId: userId,
+      title: data.title,
+      author: data.author,
+      persona: data.persona,
+      fileURL: data.fileURL,
+      fileBlobKey: data.fileBlobKey,
+      coverURL: data.coverURL,
+      coverBlobKey: data.coverBlobKey,
+      fileSize: data.fileSize,
       slug,
       totalSegments: 0,
     });
@@ -68,39 +76,66 @@ export const createBook = async (data: CreateBook) => {
 
 export const saveBookSegments = async (
   bookId: string,
-  clerkId: string,
   segments: TextSegment[]
 ) => {
   try {
-    await connectToDatabase();
-    console.log("Saving book segments...");
+    const { userId } = await getUserSubscription();
 
-    const segmentsToInsert = segments.map(
-      ({ text, segmentIndex, pageNumber, wordCount }) => ({
-        clerkId,
-        bookId,
-        content: text,
-        segmentIndex,
-        pageNumber,
-        wordCount,
-      })
-    );
-    await BookSegment.insertMany(segmentsToInsert);
-    await Book.findByIdAndUpdate(bookId, { totalSegments: segments.length });
-    console.log("Successfully saved segments");
-    return {
-      success: true,
-      data: { segmentsCreated: segments.length },
-    };
+    if (!userId) {
+      return {
+        success: false as const,
+        error: "You must be logged in to save book segments.",
+      };
+    }
+
+    await connectToDatabase();
+
+    // Only the book's owner may attach segments to it
+    const ownedBook = await Book.exists({ _id: bookId, clerkId: userId });
+
+    if (!ownedBook) {
+      return {
+        success: false as const,
+        error: "Book not found.",
+      };
+    }
+
+    try {
+      console.log("Saving book segments...");
+
+      const segmentsToInsert = segments.map(
+        ({ text, segmentIndex, pageNumber, wordCount }) => ({
+          clerkId: userId,
+          bookId,
+          content: text,
+          segmentIndex,
+          pageNumber,
+          wordCount,
+        })
+      );
+      await BookSegment.insertMany(segmentsToInsert);
+      await Book.findByIdAndUpdate(bookId, { totalSegments: segments.length });
+      console.log("Successfully saved segments");
+      return {
+        success: true as const,
+        data: { segmentsCreated: segments.length },
+      };
+    } catch (error) {
+      console.error("Error saving book segment", error);
+      await BookSegment.deleteMany({ bookId, clerkId: userId });
+      await Book.findOneAndDelete({ _id: bookId, clerkId: userId });
+      console.log(
+        "Deleted book segments and book due to failure to save segments"
+      );
+      return {
+        success: false as const,
+        error,
+      };
+    }
   } catch (error) {
     console.error("Error saving book segment", error);
-    await BookSegment.deleteMany({ bookId });
-    await Book.findByIdAndDelete(bookId);
-    console.log(
-      "Deleted book segments and book due to failure to save segments"
-    );
     return {
-      success: false,
+      success: false as const,
       error,
     };
   }
@@ -141,6 +176,33 @@ export const getAllBooks = async () => {
     };
   } catch (error) {
     console.error("Error fetching all books", error);
+    return {
+      success: false,
+      error,
+    };
+  }
+};
+
+// Case-insensitive regex match on title or author; empty query returns all books
+export const searchBooks = async (query: string = "") => {
+  const trimmed = query.trim();
+  if (!trimmed) return getAllBooks();
+
+  try {
+    await connectToDatabase();
+    // Escape so user input is matched literally and can't inject regex syntax
+    const pattern = new RegExp(trimmed.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+    const books = await Book.find({
+      $or: [{ title: pattern }, { author: pattern }],
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+    return {
+      success: true,
+      data: serializeData(books),
+    };
+  } catch (error) {
+    console.error("Error searching books", error);
     return {
       success: false,
       error,

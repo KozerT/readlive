@@ -1,6 +1,12 @@
-import type { NextConfig } from "next"
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      // Server actions carry parsed PDF text (saveBookSegments), not the file itself
+      bodySizeLimit: "100mb",
+    },
+  },
   images: {
     remotePatterns: [
       {
@@ -28,6 +34,6 @@ const nextConfig: NextConfig = {
       },
     },
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;
