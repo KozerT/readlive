@@ -1,12 +1,10 @@
 "use client"
 
 import { PLAN_LIMITS, PLANS, PlanType } from "@/lib/subbscriptions-constants"
-import { useAuth, useUser } from "@clerk/nextjs"
+import { useAuth } from "@clerk/nextjs"
 
 export const useSubscription = () => {
-  const { has, isLoaded: isAuthLoaded } = useAuth()
-  const { user, isLoaded: isUserLoaded } = useUser()
-  const isLoaded = isAuthLoaded && isUserLoaded
+  const { has, isLoaded } = useAuth()
 
   if (!isLoaded) {
     return {
@@ -18,23 +16,12 @@ export const useSubscription = () => {
 
   let plan: PlanType = PLANS.FREE
 
-  if (has?.({ permission: "pro" }) || has?.({ plan: "pro" })) {
+  if (has?.({ plan: PLANS.PRO })) {
     plan = PLANS.PRO
-  } else if (has?.({ permission: "standard" }) || has?.({ plan: "standard" })) {
+  } else if (has?.({ plan: PLANS.STANDARD })) {
     plan = PLANS.STANDARD
-  } else {
-    const metadataPlan = (
-      user?.publicMetadata?.plan || user?.publicMetadata?.billingPlan
-    )
-      ?.toString()
-      .toLowerCase()
-
-    if (metadataPlan === "pro") {
-      plan = PLANS.PRO
-    } else if (metadataPlan === "standard") {
-      plan = PLANS.STANDARD
-    }
   }
+
   return {
     plan,
     limits: PLAN_LIMITS[plan],

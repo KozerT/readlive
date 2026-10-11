@@ -92,7 +92,8 @@ export interface StartSessionResult {
   success: boolean
   sessionId?: string
   error?: string
-  maxDUrationMinutes?: number
+  isBillingError?: boolean
+  maxDurationMinutes?: number
 }
 export interface EndSessionResult {
   success: boolean

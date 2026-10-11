@@ -1,5 +1,8 @@
 import { MAX_FILE_SIZE } from "@/lib/constants"
-import { auth } from "@clerk/nextjs/server"
+import {
+  getBookLimitError,
+  getUserSubscription,
+} from "@/lib/subscription.server"
 import { handleUpload, HandleUploadBody } from "@vercel/blob/client"
 import { NextResponse } from "next/server"
 
@@ -10,10 +13,15 @@ export async function POST(request: Request): Promise<NextResponse> {
       body,
       request,
       onBeforeGenerateToken: async () => {
-        const { userId } = await auth()
+        const { userId, limits } = await getUserSubscription()
 
         if (!userId) {
           throw new Error("Unauthorized: User not authenticated")
+        }
+
+        const limitError = await getBookLimitError(userId, limits)
+        if (limitError) {
+          throw new Error(`BillingLimit: ${limitError}`)
         }
 
         return {
@@ -38,9 +46,22 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json(jsonResponse)
   } catch (e) {
     const message = e instanceof Error ? e.message : "An unknown error occurred"
-    const status = message.includes("Unauthorized") ? 401 : 500
+    const isBillingLimit = message.startsWith("BillingLimit: ")
+    const status = message.includes("Unauthorized")
+      ? 401
+      : isBillingLimit
+        ? 403
+        : 500
     console.error("Upload error", e)
-    const clientMessage = status === 401 ? "Unauthorized" : "Upload failed"
-    return NextResponse.json({ error: clientMessage }, { status })
+    const clientMessage =
+      status === 401
+        ? "Unauthorized"
+        : isBillingLimit
+          ? message.replace("BillingLimit: ", "")
+          : "Upload failed"
+    return NextResponse.json(
+      { error: clientMessage, isBillingError: isBillingLimit },
+      { status }
+    )
   }
 }

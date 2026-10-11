@@ -2,6 +2,7 @@
 
 import VoiceSession from "@/database/models/voiceSession.model"
 import { connectToDatabase } from "@/database/mongose"
+import { getUserSubscription } from "@/lib/subscription.server"
 import { getCurrentPeriodStart } from "@/lib/subbscriptions-constants"
 import { EndSessionResult, StartSessionResult } from "@/types"
 import { auth } from "@clerk/nextjs/server"
@@ -20,20 +21,34 @@ export const startVoiceSession = async (
 
     await connectToDatabase()
 
-    //TODO: check limits and billing plan allows to do this action, if not return an error message to the user
+    const { limits } = await getUserSubscription()
+    const billingPeriodStart = getCurrentPeriodStart()
+
+    const sessionCount = await VoiceSession.countDocuments({
+      clerkId: userId,
+      billingPeriodStart,
+    })
+
+    if (sessionCount >= limits.maxSessionsPerMonth) {
+      return {
+        success: false,
+        error: `You've used all ${limits.maxSessionsPerMonth} voice sessions for this month. Upgrade your plan to continue.`,
+        isBillingError: true,
+      }
+    }
 
     const session = await VoiceSession.create({
       clerkId: userId,
       bookId,
       startedAt: new Date(),
       durationSeconds: 0,
-      billingPeriodStart: getCurrentPeriodStart(),
+      billingPeriodStart,
     })
 
     return {
       success: true,
       sessionId: session._id.toString(),
-      //     maxDUrationMinutes: 60, //TODO: get this value from the user's subscription plan
+      maxDurationMinutes: limits.maxDurationPerSession,
     }
   } catch (error) {
     console.error("Error creating session:", error)

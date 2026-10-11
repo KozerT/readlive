@@ -3,6 +3,7 @@
 import Book from "@/database/models/book.model";
 import BookSegment from "@/database/models/bookSegment.model";
 import { connectToDatabase } from "@/database/mongose";
+import { getBookLimitError, getUserSubscription } from "@/lib/subscription.server";
 import { generateSlug, serializeData } from "@/lib/utils";
 import { CreateBook, TextSegment } from "@/types";
 import { revalidatePath } from "next/cache";
@@ -22,18 +23,29 @@ export const createBook = async (data: CreateBook) => {
       };
     }
 
-    //TODO: Check subscription limits before creating a book
-    // if (isBillingLimitReached) {
-    //   return {
-    //     success: false,
-    //     error: "You've reached your plan's book limit.",
-    //     isBillingError: true,
-    //   }
-    // }
+    const { userId, limits } = await getUserSubscription();
+
+    if (!userId) {
+      return {
+        success: false as const,
+        error: "You must be logged in to add a book.",
+        isBillingError: false as const,
+      };
+    }
+
+    const limitError = await getBookLimitError(userId, limits);
+
+    if (limitError) {
+      return {
+        success: false as const,
+        error: limitError,
+        isBillingError: true as const,
+      };
+    }
 
     const book = await Book.create({
       ...data,
-      clerkId: data.clerkId,
+      clerkId: userId,
       slug,
       totalSegments: 0,
     });
