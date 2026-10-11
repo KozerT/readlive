@@ -99,6 +99,7 @@ const UploadForm = () => {
       const uploadedPdfBlob = await upload(fileTitle, pdfFile, {
         access: "public",
         handleUploadUrl: "/api/upload",
+        clientPayload: "pdf",
         contentType: "application/pdf",
       })
 
@@ -112,6 +113,7 @@ const UploadForm = () => {
           {
             access: "public",
             handleUploadUrl: "/api/upload",
+            clientPayload: "cover",
             contentType: coverFile.type,
           }
         )
@@ -123,6 +125,7 @@ const UploadForm = () => {
         const uploadedCoverBlob = await upload(`${fileTitle}_cover.png`, blob, {
           access: "public",
           handleUploadUrl: "/api/upload",
+          clientPayload: "cover",
           contentType: "image/png",
         })
         coverUrl = uploadedCoverBlob.url
