@@ -39,6 +39,7 @@ function VapiControls({
     messages,
     duration,
     maxDurationSeconds,
+    isPlanLoaded,
     currentMessage,
     curentUserMessage: currentUserMessage,
     limitError,
@@ -146,7 +147,8 @@ function VapiControls({
                   aria-hidden="true"
                 />
                 <span className="vapi-status-text">
-                  {formatTime(duration)} / {formatTime(maxDurationSeconds)}
+                  {formatTime(duration)} /{" "}
+                  {isPlanLoaded ? formatTime(maxDurationSeconds) : "--:--"}
                 </span>
               </div>
               {sessionUsage && (

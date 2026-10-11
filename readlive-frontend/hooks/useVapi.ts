@@ -13,6 +13,7 @@ import {
 import { getVoice } from "@/lib/utils";
 import { IBook, Messages } from "@/types";
 import { useAuth } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import Vapi from "@vapi-ai/web";
 import { useEffect, useRef, useState } from "react";
 
@@ -72,7 +73,9 @@ function getVapi() {
 
 export const useVapi = (book: IBook, initialSessionsUsed = 0) => {
   const { userId } = useAuth();
-  const { limits } = useSubscription();
+  const { limits, isLoaded: isPlanLoaded } = useSubscription();
+  const router = useRouter();
+  const routerRef = useRef(router);
 
   //TODO: implement limits, so that user can speak only a certain amount of words per month, and if they reach the limit, they will have to upgrade their plan
 
@@ -89,9 +92,13 @@ export const useVapi = (book: IBook, initialSessionsUsed = 0) => {
   const sessionIdRef = useRef<string | null>(null);
   const isStoppingRef = useRef<boolean>(false);
   const endedReasonRef = useRef<string | null>(null);
-  const maxDurationSeconds = limits?.maxDurationPerSession
-    ? limits.maxDurationPerSession * 60
-    : 15 * 60;
+  // The server's value (from startVoiceSession) wins over the client's plan guess
+  const [serverMaxSeconds, setServerMaxSeconds] = useState<number | null>(null);
+  const maxDurationSeconds =
+    serverMaxSeconds ??
+    (limits?.maxDurationPerSession
+      ? limits.maxDurationPerSession * SECONDS_PER_MINUTE
+      : 15 * SECONDS_PER_MINUTE);
 
   // Latest values for the event handlers registered once on mount
   const maxDurationRef = useRef(maxDurationSeconds);
@@ -101,7 +108,8 @@ export const useVapi = (book: IBook, initialSessionsUsed = 0) => {
   useEffect(() => {
     maxDurationRef.current = maxDurationSeconds;
     durationRef.current = duration;
-  }, [maxDurationSeconds, duration]);
+    routerRef.current = router;
+  }, [maxDurationSeconds, duration, router]);
   const voice = book.persona || DEFAULT_VOICE;
 
   const isActive =
@@ -165,17 +173,11 @@ export const useVapi = (book: IBook, initialSessionsUsed = 0) => {
 
             // Check duration limit
             if (newDuration >= maxDurationRef.current) {
-              if (timerRef.current) {
-                clearInterval(timerRef.current);
-                timerRef.current = null;
-              }
               isStoppingRef.current = true;
+              finishCall("on time limit");
               getVapi().stop();
-              setLimitError(
-                `Session time limit (${Math.floor(
-                  maxDurationRef.current / SECONDS_PER_MINUTE
-                )} minutes) reached. Upgrade your plan for longer sessions.`
-              );
+              // Plan time limit reached: send the user back to the homepage
+              routerRef.current.push("/");
             }
           }
         }, TIMER_INTERVAL_MS);
@@ -334,6 +336,12 @@ export const useVapi = (book: IBook, initialSessionsUsed = 0) => {
         return;
       }
 
+      const callMaxSeconds = result.maxDurationMinutes
+        ? result.maxDurationMinutes * SECONDS_PER_MINUTE
+        : maxDurationSeconds;
+      maxDurationRef.current = callMaxSeconds;
+      setServerMaxSeconds(callMaxSeconds);
+
       sessionIdRef.current = result.sessionId || null;
       setSessionsUsed((used) => used + 1);
       const firstMessage = `Hello! Nice to meet you!You are now in a voice conversation with ${book.persona}. Have you actually read the book "${book.title}"? Or shall we dive into the story?`;
@@ -341,6 +349,8 @@ export const useVapi = (book: IBook, initialSessionsUsed = 0) => {
       const startOverrides = {
         firstMessage,
         silenceTimeoutSeconds: SILENCE_TIMEOUT_SECONDS,
+        // Enforce the plan limit on Vapi's side too
+        maxDurationSeconds: callMaxSeconds,
         variableValues: {
           title: book.title,
           author: book.author,
@@ -396,6 +406,7 @@ export const useVapi = (book: IBook, initialSessionsUsed = 0) => {
     messages,
     duration,
     maxDurationSeconds,
+    isPlanLoaded,
     currentMessage,
     curentUserMessage,
     limitError,

@@ -5,6 +5,7 @@ import {
   PLANS,
   PlanLimits,
   PlanType,
+  resolvePlan,
 } from "@/lib/subbscriptions-constants"
 import { auth } from "@clerk/nextjs/server"
 
@@ -16,15 +17,13 @@ export type UserSubscription = {
 
 // Resolves the signed-in user's plan from Clerk Billing; no subscription = free tier
 export const getUserSubscription = async (): Promise<UserSubscription> => {
-  const { userId, has } = await auth()
+  const { userId, has, sessionClaims } = await auth()
 
-  let plan: PlanType = PLANS.FREE
-  if (userId) {
-    if (has({ plan: PLANS.PRO })) {
-      plan = PLANS.PRO
-    } else if (has({ plan: PLANS.STANDARD })) {
-      plan = PLANS.STANDARD
-    }
+  const plan: PlanType = userId ? resolvePlan(has) : PLANS.FREE
+
+  if (process.env.NODE_ENV !== "production") {
+    // Clerk puts the active plan slugs in the "pla" claim (e.g. "u:standard")
+    console.warn("[subscription]", { plan, pla: sessionClaims?.pla })
   }
 
   return { userId, plan, limits: PLAN_LIMITS[plan] }
