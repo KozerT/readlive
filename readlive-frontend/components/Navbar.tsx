@@ -7,10 +7,10 @@ import {
   UserButton,
   useUser,
 } from "@clerk/nextjs";
+import { Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
 import { useRef, useState } from "react";
 
 const navItems = [
@@ -92,7 +92,9 @@ const Navbar = () => {
                     className="nav-user-name"
                     onClick={() =>
                       userMenuRef.current
-                        ?.querySelector<HTMLButtonElement>("button.cl-userButtonTrigger")
+                        ?.querySelector<HTMLButtonElement>(
+                          "button.cl-userButtonTrigger"
+                        )
                         ?.click()
                     }
                   >

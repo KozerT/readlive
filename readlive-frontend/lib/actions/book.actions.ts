@@ -148,6 +148,33 @@ export const getAllBooks = async () => {
   }
 };
 
+// Case-insensitive regex match on title or author; empty query returns all books
+export const searchBooks = async (query: string = "") => {
+  const trimmed = query.trim();
+  if (!trimmed) return getAllBooks();
+
+  try {
+    await connectToDatabase();
+    // Escape so user input is matched literally and can't inject regex syntax
+    const pattern = new RegExp(trimmed.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+    const books = await Book.find({
+      $or: [{ title: pattern }, { author: pattern }],
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+    return {
+      success: true,
+      data: serializeData(books),
+    };
+  } catch (error) {
+    console.error("Error searching books", error);
+    return {
+      success: false,
+      error,
+    };
+  }
+};
+
 type SegmentMatch = {
   content: string;
   segmentIndex: number;
