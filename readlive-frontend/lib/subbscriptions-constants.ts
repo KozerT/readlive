@@ -38,3 +38,19 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     hasSessionHistory: true,
   },
 }
+
+// Clerk plan slugs that map to each tier (the slug is set in the Clerk dashboard)
+const PLAN_SLUGS: Record<Exclude<PlanType, "free">, string[]> = {
+  [PLANS.PRO]: ["pro", "premium"],
+  [PLANS.STANDARD]: ["standard", "standart"],
+}
+
+// Single source of truth for plan detection (client hook and server helper)
+export const resolvePlan = (
+  has?: (params: { plan: string }) => boolean
+): PlanType => {
+  for (const tier of [PLANS.PRO, PLANS.STANDARD] as const) {
+    if (PLAN_SLUGS[tier].some((slug) => has?.({ plan: slug }))) return tier
+  }
+  return PLANS.FREE
+}

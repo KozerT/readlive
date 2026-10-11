@@ -1,12 +1,30 @@
 "use client"
 
-import { PLAN_LIMITS, PLANS, PlanType } from "@/lib/subbscriptions-constants"
-import { useAuth, useUser } from "@clerk/nextjs"
+import {
+  PLAN_LIMITS,
+  PLANS,
+  resolvePlan,
+} from "@/lib/subbscriptions-constants"
+import { useAuth, useSession } from "@clerk/nextjs"
+import { useRouter } from "next/navigation"
+import { useEffect, useRef } from "react"
 
 export const useSubscription = () => {
-  const { has, isLoaded: isAuthLoaded } = useAuth()
-  const { user, isLoaded: isUserLoaded } = useUser()
-  const isLoaded = isAuthLoaded && isUserLoaded
+  const { has, isLoaded } = useAuth()
+  const { session } = useSession()
+  const router = useRouter()
+  const refreshedRef = useRef(false)
+
+  // The plan lives in the session token, which can be up to a minute old after
+  // an upgrade. Reload it once on mount so a new plan applies immediately.
+  useEffect(() => {
+    if (!isLoaded || !session || refreshedRef.current) return
+    refreshedRef.current = true
+    session
+      .reload()
+      .then(() => router.refresh())
+      .catch((err) => console.error("Failed to refresh session:", err))
+  }, [isLoaded, session, router])
 
   if (!isLoaded) {
     return {
@@ -16,25 +34,8 @@ export const useSubscription = () => {
     }
   }
 
-  let plan: PlanType = PLANS.FREE
+  const plan = resolvePlan(has)
 
-  if (has?.({ permission: "pro" }) || has?.({ plan: "pro" })) {
-    plan = PLANS.PRO
-  } else if (has?.({ permission: "standard" }) || has?.({ plan: "standard" })) {
-    plan = PLANS.STANDARD
-  } else {
-    const metadataPlan = (
-      user?.publicMetadata?.plan || user?.publicMetadata?.billingPlan
-    )
-      ?.toString()
-      .toLowerCase()
-
-    if (metadataPlan === "pro") {
-      plan = PLANS.PRO
-    } else if (metadataPlan === "standard") {
-      plan = PLANS.STANDARD
-    }
-  }
   return {
     plan,
     limits: PLAN_LIMITS[plan],

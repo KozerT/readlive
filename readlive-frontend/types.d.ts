@@ -1,4 +1,5 @@
 import { UploadSchema } from "@/lib/zod"
+import { PlanType } from "@/lib/subbscriptions-constants"
 import z from "zod"
 
 // ============================================
@@ -92,9 +93,16 @@ export interface StartSessionResult {
   success: boolean
   sessionId?: string
   error?: string
-  maxDUrationMinutes?: number
+  isBillingError?: boolean
+  maxDurationMinutes?: number
 }
 export interface EndSessionResult {
   success: boolean
   error?: string
+}
+
+export interface SessionUsage {
+  plan: PlanType
+  used: number
+  max: number | null // null = unlimited
 }
