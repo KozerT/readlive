@@ -22,9 +22,14 @@ const Navbar = () => {
   const pathName = usePathname();
   const { user } = useUser();
   const userMenuRef = useRef<HTMLDivElement>(null);
-  // Remember the page the menu was opened on, so navigating closes it
-  const [menuOpenedAt, setMenuOpenedAt] = useState<string | null>(null);
-  const isMenuOpen = menuOpenedAt === pathName;
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [prevPathName, setPrevPathName] = useState(pathName);
+
+  // The Navbar stays mounted across navigation, so close the menu when the route changes
+  if (prevPathName !== pathName) {
+    setPrevPathName(pathName);
+    setIsMenuOpen(false);
+  }
 
   const isActiveLink = (href: string) =>
     pathName === href || (href !== "/" && pathName.startsWith(href));
@@ -111,7 +116,7 @@ const Navbar = () => {
             aria-label={isMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
-            onClick={() => setMenuOpenedAt(isMenuOpen ? null : pathName)}
+            onClick={() => setIsMenuOpen((open) => !open)}
           >
             {isMenuOpen ? (
               <X className="size-6" aria-hidden="true" />
@@ -131,6 +136,7 @@ const Navbar = () => {
             <Link
               href={href}
               key={label}
+              onClick={() => setIsMenuOpen(false)}
               className={cn(
                 "nav-link-small w-fit py-3",
                 isActiveLink(href)
